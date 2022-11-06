@@ -90,7 +90,7 @@ namespace SamplePlugin
                     ReceiveAbilityEffect);
                 ReceiveAbilityHook.Enable();
                 ActorControlSelfHook = Hook<ActorControlSelfDelegate>.FromAddress(
-                    DalamudApi.SigScanner.ScanText("40 55 53 41 55 41 56 41 57 48 8D AC 24 ?? ?? ?? ??"), ReceiveActorControlSelf);
+                    DalamudApi.SigScanner.ScanText("E8 ?? ?? ?? ?? 0F B7 0B 83 E9 64"), ReceiveActorControlSelf);
                 ActorControlSelfHook.Enable();
                 //NpcSpawnHook = Hook<NpcSpawnDelegate>.FromAddress(
                 //    DalamudApi.SigScanner.ScanText(
