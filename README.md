@@ -6,42 +6,71 @@ This is not designed to be the simplest possible example, but it is also not des
 
 ## Main Points
 
-* Simple functional plugin
-  * Slash command
-  * Main UI
-  * Settings UI
-  * Image loading
-  * Plugin json
-* Simple, slightly-improved plugin configuration handling
-* Project organization
-  * Copies all necessary plugin files to the output directory
-    * Does not copy dependencies that are provided by dalamud
-    * Output directory can be zipped directly and have exactly what is required
-  * Hides data files from visual studio to reduce clutter
-    * Also allows having data files in different paths than VS would usually allow if done in the IDE directly
+    ChatLog = 0,不管
+    
+    Territory = 1,大喇叭func拿,和MAP差不多?
+    
+    ChangePrimaryPlayer = 2,logout？
+    
+    AddCombatant = 3,
+    
+    RemoveCombatant = 4,
+    
+    PartyList = 11,拿partylist？如何触发？
+    
+    PlayerStats = 12,这是哪个包？
+    
+    StartsCasting = 20,done
+    
+    ActionEffect = 21,done
+    
+    AOEActionEffect = 22,done
+    
+    CancelAction = 23,done
+    
+    DoTHoT = 24,done
+    
+    Death = 25,done
+    
+    StatusAdd = 26,
+    
+    TargetIcon = 27,
+    
+    WaymarkMarker = 28,done
+    
+    SignMarker = 29,done
+    
+    StatusRemove = 30,done
+    
+    Gauge = 31,done
+    
+//这仨大概也是actorcontrol？
 
-
-The intention is less that any of this is used directly in other projects, and more to show how similar things can be done.
-
-## To Use
-### Building
-
-1. Open up `SamplePlugin.sln` in your C# editor of choice (likely [Visual Studio 2022](https://visualstudio.microsoft.com) or [JetBrains Rider](https://www.jetbrains.com/rider/)).
-2. Build the solution. By default, this will build a `Debug` build, but you can switch to `Release` in your IDE.
-3. The resulting plugin can be found at `SamplePlugin/bin/x64/Debug/SamplePlugin.dll` (or `Release` if appropriate.)
-
-### Activating in-game
-
-1. Launch the game and use `/xlsettings` in chat or `xlsettings` in the Dalamud Console to open up the Dalamud settings.
-    * In here, go to `Experimental`, and add the full path to the `SamplePlugin.dll` to the list of Dev Plugin Locations.
-2. Next, use `/xlplugins` (chat) or `xlplugins` (console) to open up the Plugin Installer.
-    * In here, go to `Dev Tools > Installed Dev Plugins`, and the `SamplePlugin` should be visible. Enable it.
-3. You should now be able to use `/pmycommand` (chat) or `pmycommand` (console)!
-
-Note that you only need to add it to the Dev Plugin Locations once (Step 1); it is preserved afterwards. You can disable, enable, or load your plugin on startup through the Plugin Installer.
-
-### Reconfiguring for your own uses
-
-Basically, just replace all references to `SamplePlugin` in all of the files and filenames with your desired name. You'll figure it out 😁
-
-Dalamud will load the JSON file (by default, `SamplePlugin/SamplePlugin.json`) next to your DLL and use it for metadata, including the description for your plugin in the Plugin Installer. Make sure to update this with information relevant to _your_ plugin!
+    World = 32,
+    
+    Director = 33,
+    
+    NameToggle = 34,
+    
+    Tether = 35,done(取消没写)
+    
+    LimitBreak = 36, 
+    
+    EffectResult = 37,这玩意怎么触发的
+    
+    StatusList = 38,object结构拿？
+    
+    UpdateHp = 39, 
+    
+    ChangeMap = 40,这和01有啥区别？
+    
+    SystemLogMessage = 41,不管
+    
+    StatusList3 = 42,
+//以下不管
+    Settings = 249,
+    Process = 250,
+    Debug = 251,
+    PacketDump = 252,
+    Version = 253,
+    Error = 254
