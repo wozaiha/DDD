@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "dependencies": {
+    "net5.0-windows7.0": {
+      "DalamudPackager": {
+        "type": "Direct",
+        "requested": "[2.1.8, )",
+        "resolved": "2.1.8",
+        "contentHash": "YqagNXs9InxmqkXzq7kLveImxnodkBEicAhydMXVp7dFjC7xb76U6zGgAax4/BWIWfZeWzr5DJyQSev31kj81A=="
+      },
+      "Machina.FFXIV": {
+        "type": "Direct",
+        "requested": "[2.3.4.6, )",
+        "resolved": "2.3.4.6",
+        "contentHash": "2KmeOSD6+rMN+kOb6BjmncW8u8U3UpMKnHeCL5s7/0gLVQCrV7vNTfvggyMT/TSY0eWiqk75FYyDXTlTsh0Rtw==",
+        "dependencies": {
+          "Machina": "2.3.1.1"
+        }
+      },
+      "Machina": {
+        "type": "Transitive",
+        "resolved": "2.3.1.1",
+        "contentHash": "5hD//OpkwIGWfEcsMiPUCekiyCwP3tC5gekGLKckue87vZI9SrPPXJ4alAVud7RJ1wNRlAGWJvjLW9uyYgulGA=="
+      }
+    }
+  }
+}
