@@ -8,7 +8,7 @@ This is not designed to be the simplest possible example, but it is also not des
 
     ChatLog = 0,不管
     
-    Territory = 1,大喇叭func拿,和MAP差不多?
+    Territory = 1,done,但是ACT资源文件翻译和本地有区别是什么鬼
     
     ChangePrimaryPlayer = 2,logout？
     
@@ -16,7 +16,7 @@ This is not designed to be the simplest possible example, but it is also not des
     
     RemoveCombatant = 4,
     
-    PartyList = 11,拿partylist？如何触发？
+    PartyList = 11,拿partylist 每帧比较
     
     PlayerStats = 12,这是哪个包？
     
@@ -32,9 +32,9 @@ This is not designed to be the simplest possible example, but it is also not des
     
     Death = 25,done
     
-    StatusAdd = 26,
+    StatusAdd = 26, done
     
-    TargetIcon = 27,
+    TargetIcon = 27,done
     
     WaymarkMarker = 28,done
     
@@ -52,7 +52,7 @@ This is not designed to be the simplest possible example, but it is also not des
     
     NameToggle = 34,
     
-    Tether = 35,done(取消没写)
+    Tether = 35,done(取消连线ACT没写)
     
     LimitBreak = 36, 
     
@@ -62,7 +62,7 @@ This is not designed to be the simplest possible example, but it is also not des
     
     UpdateHp = 39, 
     
-    ChangeMap = 40,这和01有啥区别？
+    ChangeMap = 40,区别还挺大的,抄radar?
     
     SystemLogMessage = 41,不管
     

@@ -12,6 +12,7 @@ using Dalamud.Interface.Windowing;
 using Dalamud.IoC;
 using Dalamud.Logging;
 using Dalamud.Plugin;
+using Dalamud.Utility;
 using Lumina.Excel;
 using Lumina.Excel.GeneratedSheets;
 using SamplePlugin.Windows;
@@ -35,6 +36,7 @@ namespace SamplePlugin
         private ExcelSheet<TerritoryType>? territory;
         private ExcelSheet<Action>? actions;
         private ExcelSheet<Status>? status;
+        private ExcelSheet<Map>? maps;
 
         private delegate void EffectDelegate(uint sourceId, IntPtr sourceCharacter);
         private Hook<EffectDelegate> EffectHook;
@@ -62,7 +64,11 @@ namespace SamplePlugin
         private delegate void GaugeDelegate(IntPtr ptr1,IntPtr ptr2);
         private Hook<GaugeDelegate> GaugeHook;
 
+        private delegate void EffectResultDelegate(uint targetId, IntPtr ptr, byte a3);
+        private Hook<EffectResultDelegate> EffectResultHook;
 
+        public IntPtr MapIdDungeon { get; private set; }
+        public IntPtr MapIdWorld { get; private set; }
 
         private int partyLength = 0;
 
@@ -111,8 +117,14 @@ namespace SamplePlugin
                 GaugeHook = Hook<GaugeDelegate>.FromAddress(
                     DalamudApi.SigScanner.ScanText("E8 ?? ?? ?? ?? 80 BE ?? ?? ?? ?? ?? 0F 83 ?? ?? ?? ??"), Gauge);
                 GaugeHook.Enable();
-                
 
+                
+                EffectResultHook = Hook<EffectResultDelegate>.FromAddress(
+                    DalamudApi.SigScanner.ScanText("48 8B C4 44 88 40 18 89 48 08"), EffectResult);
+                EffectResultHook.Enable();
+
+                MapIdDungeon = DalamudApi.SigScanner.GetStaticAddressFromSig("44 8B 3D ?? ?? ?? ?? 45 85 FF");
+                MapIdWorld = DalamudApi.SigScanner.GetStaticAddressFromSig("44 0F 44 3D ?? ?? ?? ??");
             }
 
             #endregion
@@ -136,6 +148,7 @@ namespace SamplePlugin
             territory = DalamudApi.DataManager.Excel.GetSheet<TerritoryType>();
             actions = DalamudApi.DataManager.Excel.GetSheet<Action>();
             status = DalamudApi.DataManager.Excel.GetSheet<Status>();
+            maps = DalamudApi.DataManager.Excel.GetSheet<Map>();
 
             DalamudApi.GameNetwork.NetworkMessage += GameNetwork_NetworkMessage;
             DalamudApi.ClientState.TerritoryChanged += ClientState_TerritoryChanged;
@@ -187,16 +200,18 @@ namespace SamplePlugin
                 //TODO:删除标志时的ID修正
                 ActorControlCategory.LoseEffect => $"30||{format.FormatNetworkBuffMessage((ushort)arg0,status.GetRow(arg0).Name.RawString,0.00f,arg2, DalamudApi.ObjectTable.SearchById(arg2)?.Name.TextValue,entityId,entity?.Name.TextValue,(ushort)arg1,entity?.CurrentHp,entity?.MaxHp)}",
                 ActorControlCategory.Tether => $"35||{format.FormatNetworkTetherMessage(entityId, entity.Name.TextValue, arg2, DalamudApi.ObjectTable.SearchById(arg2)?.Name.TextValue,arg0,arg1,arg2,arg3,arg4,arg5)}",
-                //TODO:确定Tether顺序
-                ActorControlCategory.SetBGM => 
+                
+                ActorControlCategory.TargetIcon => $"27||{format.FormatNetworkTargetIconMessage(entityId,entity?.Name.TextValue,arg1,arg2, arg0, arg3,arg4,arg5)}",
+                //arg0=MarkerID
 
                 //TODO:LimitBreak - Line 36
 
-                $"TESTING::{id}:{entityId:X}:0={arg0}:1={arg1:X}:2={arg2}:3={arg3:X}:4={arg4}:5={arg5}:6={targetId:X}",
+                //$"TESTING::{id}:{entityId:X}:0={arg0}:1={arg1:X}:2={arg2}:3={arg3:X}:4={arg4}:5={arg5}:6={targetId:X}",
 
                 _ => ""
             };
-            if (message !="") PluginLog.Log($"{message}");
+            if (message.Contains("TEST")) PluginLog.Warning($"{message}");
+            if (!message.IsNullOrEmpty()) PluginLog.Log($"{message}");
 
         }
         private unsafe void ReceiveAbilityEffect(uint sourceId, IntPtr sourceChara, IntPtr pos,
@@ -259,50 +274,33 @@ namespace SamplePlugin
             ReceiveAbilityHook.Original(sourceId, sourceChara, pos, effectHeader, effectArray, effectTrail);
         }
 
-        private void ClientState_TerritoryChanged(object? sender, ushort e)
+        private unsafe void ClientState_TerritoryChanged(object? sender, ushort e)
         {
             var placeName = territory.GetRow(DalamudApi.ClientState.TerritoryType)?.PlaceName.Value?.Name;
             PluginLog.Log($"01||{format.FormatChangeZoneMessage(DalamudApi.ClientState.TerritoryType, placeName)}");
-            //TODO
-            //PluginLog.Log($"02|{format.FormatChangePrimaryPlayerMessage(DalamudApi.ClientState.LocalPlayer?.ObjectId,DalamudApi.ClientState.LocalPlayer?.Name.TextValue)}");
-            //PluginLog.Log($"XX|{format.FormatPlayerStatsMessage(DalamudApi.ClientState.TerritoryType,DalamudApi.ClientState.LocalPlayer.ClassJob.Id, DalamudApi.ClientState.LocalPlayer.)}")
+            MapChange();
+        //TODO MAP change
+        //PluginLog.Log($"02|{format.FormatChangePrimaryPlayerMessage(DalamudApi.ClientState.LocalPlayer?.ObjectId,DalamudApi.ClientState.LocalPlayer?.Name.TextValue)}");
+        //PluginLog.Log($"XX|{format.FormatPlayerStatsMessage(DalamudApi.ClientState.TerritoryType,DalamudApi.ClientState.LocalPlayer.ClassJob.Id, DalamudApi.ClientState.LocalPlayer.)}")
+        }
+
+        private unsafe void MapChange()
+        {
+            
+            uint MapId = *(uint*)MapIdDungeon == 0 ? *(uint*)MapIdWorld : *(uint*)MapIdDungeon;
+            var map = maps.GetRow(MapId);
+            //TODO MAP change
+            PluginLog.Log($"40||{format.FormatChangeMapMessage(MapId,map?.PlaceNameRegion.Value?.Name,map?.PlaceName.Value?.Name,map?.PlaceNameSub.Value?.Name)}");
         }
 
         //TODO 03-04
-
-
-        public static Dictionary<string, uint> ReadOpcode()
-        {
-           
-            //文件流读取
-            FileStream fs = new FileStream("\\cn-opcodes.txt", FileMode.Open);
-            StreamReader sr = new StreamReader(fs, Encoding.GetEncoding("UTF-8"));
-
-            string tempText = "";
-            Dictionary<string, uint> opCode = new Dictionary<string, uint>();
-            bool isFirst = true;
-            while ((tempText = sr.ReadLine()) != null)
-            {
-                string[] arr = tempText.Split(new char[] {','}, StringSplitOptions.RemoveEmptyEntries);
-
-                if (isFirst)
-                {
-                    isFirst = false;
-                    continue;
-                }
-                else
-                {
-                    opCode.Add(arr[0], uint.Parse(arr[-1]));
-                }
-            }
-            return opCode;
-        }
 
         private void WayMark(IntPtr ptr)
         {
             var data = Marshal.PtrToStructure<FFXIVIpcPlaceFieldMarker>(ptr);
             WayMarkHook.Original(ptr);
             var source = DalamudApi.ClientState.LocalPlayer;
+            //TODO:Source修复
             PluginLog.Log($"28||{format.FormatNetworkWaymarkMessage(data.status == 0 ? "Delete" : "Add", (uint)data.markerId, source.ObjectId, source?.Name.TextValue, data.Xint / 1000f, data.Yint / 1000f, data.Zint / 1000f)}");
         }
 
@@ -311,6 +309,7 @@ namespace SamplePlugin
             var data = Marshal.PtrToStructure<FFXIVIpcPlaceFieldMarkerPreset>(ptr);
             WayMarkPresentHook.Original(ptr);
             var source = DalamudApi.ClientState.LocalPlayer;
+            //TODO:Source修复
             for (int i = 0; i < 8; i++)
             {
                 PluginLog.Log($"28||{format.FormatNetworkWaymarkMessage(((uint)data.status & (1 << i)) == 0 ? "Delete" : "Add", (uint)i, source.ObjectId, source?.Name.TextValue, data.Xints[i] / 1000f, data.Yints[i] / 1000f, data.Zints[i] / 1000f)}");
@@ -326,6 +325,26 @@ namespace SamplePlugin
             //TODO:ID不应为0
 
         }
+
+        private void EffectResult(uint targetId, IntPtr ptr, byte a3)
+        {
+            var data = Marshal.PtrToStructure<FFXIVIpcEffectResult>(ptr);
+            EffectResultHook.Original(targetId, ptr, a3);
+            if (a3 != 0) return;
+            var target = (Character?)DalamudApi.ObjectTable.SearchById(targetId);
+            for (int i = 0; i < data.entryCount; i++)
+            {
+                var sta = data.statusEntries[i];
+                var source = DalamudApi.ObjectTable.SearchById(sta.sourceActorId);
+                var maxhp = source is Character ? (uint?)((Character)source).MaxHp : null;
+                PluginLog.Log($"26||{format.FormatNetworkBuffMessage(sta.id,status.GetRow(sta.id)?.Name.RawString,sta.duration,sta.sourceActorId,source?.Name.TextValue,targetId,target?.Name.TextValue,sta.param,target.MaxHp,maxhp)}");
+            }
+                
+            
+            
+            
+        }
+
 
 
         private void GameNetwork_NetworkMessage(System.IntPtr dataPtr, ushort opCode, uint sourceActorId, uint targetActorId, NetworkMessageDirection direction)
@@ -376,7 +395,7 @@ namespace SamplePlugin
 
                 _ => ""
             };
-            if (!string.IsNullOrEmpty(log)) PluginLog.Log(log);
+            //if (!string.IsNullOrEmpty(log)) PluginLog.Warning(log);
 
         }
 
@@ -393,6 +412,7 @@ namespace SamplePlugin
             CastHook.Dispose();
             WayMarkHook.Dispose();
             GaugeHook.Dispose();
+            EffectResultHook.Dispose();
         }
 
         private void OnCommand(string command, string args)

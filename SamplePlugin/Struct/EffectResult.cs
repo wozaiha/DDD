@@ -3,7 +3,8 @@ using System.Runtime.InteropServices;
 namespace SamplePlugin.Struct
 {
    unsafe struct FFXIVIpcEffectResult
-    {
+   {
+       private uint unknown0;
         public uint globalSequence;
         public uint actor_id;
         public uint current_hp;
@@ -20,12 +21,12 @@ namespace SamplePlugin.Struct
     };
     struct StatusEntry
     {
-        byte index; // which position do i display this
+        public byte index; // which position do i display this
         byte unknown3;
-        ushort id;
-        ushort param;
+        public ushort id;
+        public ushort param;
         ushort unknown4; // Sort this out (old right half of power/param property)
-        float duration;
-        uint sourceActorId;
+        public float duration;
+        public uint sourceActorId;
     }
 };
