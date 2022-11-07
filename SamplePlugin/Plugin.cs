@@ -77,6 +77,8 @@ namespace SamplePlugin
 
         private int partyLength = 0;
 
+        private Event eventHandle;
+
         public Plugin(
             [RequiredVersion("1.0")] DalamudPluginInterface pluginInterface,
             [RequiredVersion("1.0")] CommandManager commandManager)
@@ -89,10 +91,11 @@ namespace SamplePlugin
 
             DalamudApi.Initialize(this, this.PluginInterface);
 
+            eventHandle = new Event();
+
             #region Hook
 
-            {
-                ReceiveAbilityHook = Hook<ReceiveAbilityDelegate>.FromAddress(
+            ReceiveAbilityHook = Hook<ReceiveAbilityDelegate>.FromAddress(
                     DalamudApi.SigScanner.ScanText("4C 89 44 24 ?? 55 56 57 41 54 41 55 41 56 48 8D 6C 24 ??"),
                     ReceiveAbilityEffect);
                 ReceiveAbilityHook.Enable();
@@ -121,7 +124,7 @@ namespace SamplePlugin
 
                 MapIdDungeon = DalamudApi.SigScanner.GetStaticAddressFromSig("44 8B 3D ?? ?? ?? ?? 45 85 FF");
                 MapIdWorld = DalamudApi.SigScanner.GetStaticAddressFromSig("44 0F 44 3D ?? ?? ?? ??");
-            }
+            
 
             #endregion
 
@@ -147,10 +150,10 @@ namespace SamplePlugin
             maps = DalamudApi.DataManager.Excel.GetSheet<Map>();
             worlds = DalamudApi.DataManager.Excel.GetSheet<World>();
 
-            //DalamudApi.GameNetwork.NetworkMessage += GameNetwork_NetworkMessage;
-            DalamudApi.ClientState.TerritoryChanged += ClientState_TerritoryChanged;
+            //DalamudApi.ClientState.TerritoryChanged += ClientState_TerritoryChanged;
             DalamudApi.Framework.Update += PartyChanged;
             DalamudApi.Framework.Update += CompareObjects;
+
 
         }
 
@@ -170,10 +173,11 @@ namespace SamplePlugin
                 switch (obj.ObjectKind)
                 {
                     case ObjectKind.Player:
-                        PluginLog.Log($"03|{DateTime.Now:O}|{format.FormatCombatantMessage(obj.ObjectId, obj.OwnerId, obj.Name.TextValue, (int)((PlayerCharacter)obj).ClassJob.Id, (int)((Character)obj).Level, ((PlayerCharacter)obj).HomeWorld.Id, worlds.GetRow(((PlayerCharacter)obj).HomeWorld.Id).Name.RawString, 0, 0, (uint)((Character)obj).CurrentHp, (uint)((Character)obj).MaxHp, (uint)((Character)obj).CurrentMp, (uint)((Character)obj).MaxMp, obj.Position.X, obj.Position.Y, obj.Position.Z, obj.Rotation)}");
+                        eventHandle.SetLog($"03|{DateTime.Now:O}|{format.FormatCombatantMessage(obj.ObjectId, obj.OwnerId, obj.Name.TextValue, (int)((PlayerCharacter)obj).ClassJob.Id, (int)((Character)obj).Level, ((PlayerCharacter)obj).HomeWorld.Id, worlds.GetRow(((PlayerCharacter)obj).HomeWorld.Id).Name.RawString, 0, 0, (uint)((Character)obj).CurrentHp, (uint)((Character)obj).MaxHp, (uint)((Character)obj).CurrentMp, (uint)((Character)obj).MaxMp, obj.Position.X, obj.Position.Y, obj.Position.Z, obj.Rotation)}");
+
                         break;
                     case ObjectKind.BattleNpc:
-                        PluginLog.Log($"03|{DateTime.Now:O}|{format.FormatCombatantMessage(obj.ObjectId, obj.OwnerId, obj.Name.TextValue, 0, ((BattleNpc)obj).Level, 0, "", ((BattleNpc)obj).NameId, ((BattleNpc)obj).DataId, ((BattleNpc)obj).CurrentHp, ((BattleNpc)obj).MaxHp, ((BattleNpc)obj).CurrentMp, ((BattleNpc)obj).MaxMp, obj.Position.X, obj.Position.Y, obj.Position.Z, obj.Rotation)}");
+                        eventHandle.SetLog($"03|{DateTime.Now:O}|{format.FormatCombatantMessage(obj.ObjectId, obj.OwnerId, obj.Name.TextValue, 0, ((BattleNpc)obj).Level, 0, "", ((BattleNpc)obj).NameId, ((BattleNpc)obj).DataId, ((BattleNpc)obj).CurrentHp, ((BattleNpc)obj).MaxHp, ((BattleNpc)obj).CurrentMp, ((BattleNpc)obj).MaxMp, obj.Position.X, obj.Position.Y, obj.Position.Z, obj.Rotation)}");
                         break;
                 }
 
@@ -183,10 +187,10 @@ namespace SamplePlugin
                 switch (obj.ObjectKind)
                 {
                     case ObjectKind.Player:
-                        PluginLog.Log($"04|{DateTime.Now:O}|{format.FormatCombatantMessage(obj.ObjectId, obj.OwnerId, obj.Name.TextValue, (int)((PlayerCharacter)obj).ClassJob.Id, (int)((Character)obj).Level, ((PlayerCharacter)obj).HomeWorld.Id, worlds.GetRow(((PlayerCharacter)obj).HomeWorld.Id).Name.RawString, 0, 0, (uint)((Character)obj).CurrentHp, (uint)((Character)obj).MaxHp, (uint)((Character)obj).CurrentMp, (uint)((Character)obj).MaxMp, obj.Position.X, obj.Position.Y, obj.Position.Z, obj.Rotation)}");
+                        eventHandle.SetLog($"04|{DateTime.Now:O}|{format.FormatCombatantMessage(obj.ObjectId, obj.OwnerId, obj.Name.TextValue, (int)((PlayerCharacter)obj).ClassJob.Id, (int)((Character)obj).Level, ((PlayerCharacter)obj).HomeWorld.Id, worlds.GetRow(((PlayerCharacter)obj).HomeWorld.Id).Name.RawString, 0, 0, (uint)((Character)obj).CurrentHp, (uint)((Character)obj).MaxHp, (uint)((Character)obj).CurrentMp, (uint)((Character)obj).MaxMp, obj.Position.X, obj.Position.Y, obj.Position.Z, obj.Rotation)}");
                         break;
                     case ObjectKind.BattleNpc:
-                        PluginLog.Log($"04|{DateTime.Now:O}|{format.FormatCombatantMessage(obj.ObjectId, obj.OwnerId, obj.Name.TextValue, 0, ((BattleNpc)obj).Level, 0, "", ((BattleNpc)obj).NameId, ((BattleNpc)obj).DataId, ((BattleNpc)obj).CurrentHp, ((BattleNpc)obj).MaxHp, ((BattleNpc)obj).CurrentMp, ((BattleNpc)obj).MaxMp, obj.Position.X, obj.Position.Y, obj.Position.Z, obj.Rotation)}");
+                        eventHandle.SetLog($"04|{DateTime.Now:O}|{format.FormatCombatantMessage(obj.ObjectId, obj.OwnerId, obj.Name.TextValue, 0, ((BattleNpc)obj).Level, 0, "", ((BattleNpc)obj).NameId, ((BattleNpc)obj).DataId, ((BattleNpc)obj).CurrentHp, ((BattleNpc)obj).MaxHp, ((BattleNpc)obj).CurrentMp, ((BattleNpc)obj).MaxMp, obj.Position.X, obj.Position.Y, obj.Position.Z, obj.Rotation)}");
                         break;
                 }
             }
@@ -204,7 +208,7 @@ namespace SamplePlugin
                     lists.Add(member.ObjectId);
                 }
 
-                PluginLog.Log($"11|{DateTime.Now:O}|{format.FormatPartyMessage(partyLength, new ReadOnlyCollection<uint>(lists))}");
+                eventHandle.SetLog($"11|{DateTime.Now:O}|{format.FormatPartyMessage(partyLength, new ReadOnlyCollection<uint>(lists))}");
         }
 
         private void StartCast(uint source, IntPtr ptr)
@@ -216,14 +220,14 @@ namespace SamplePlugin
                                             data.ActionID, actions.GetRow(data.ActionID).Name, data.CastTime,
                                             DalamudApi.ObjectTable.SearchById(data.TargetID)?.Position.X,DalamudApi.ObjectTable.SearchById(data.TargetID)?.Position.Y,DalamudApi.ObjectTable.SearchById(data.TargetID)?.Position.Z,
                                             DalamudApi.ObjectTable.SearchById(data.TargetID)?.Rotation);
-            PluginLog.Log($"20|{DateTime.Now:O}|{message}");
+            eventHandle.SetLog($"20|{DateTime.Now:O}|{message}");
         }
 
         private void ReceiveActorControlSelf(uint entityId, ActorControlCategory id, uint arg0, uint arg1, uint arg2,
                                              uint arg3, uint arg4, uint arg5, ulong targetId, byte a10)
         {
             
-            //PluginLog.Log($"{entityId:X}:{id}:{arg0}:{arg1}:{arg2}:{arg3}:{arg4}:{arg5}:{targetId:X}:{a10}");
+            //eventHandle.SetLog($"{entityId:X}:{id}:{arg0}:{arg1}:{arg2}:{arg3}:{arg4}:{arg5}:{targetId:X}:{a10}");
             ActorControlSelfHook.Original(entityId, id, arg0, arg1, arg2, arg3, arg4, arg5, targetId, a10);
             var obj = DalamudApi.ObjectTable.SearchById(entityId);
             if (obj is not Character entity) return;
@@ -252,7 +256,7 @@ namespace SamplePlugin
                 _ => ""
             };
             if (message.Contains("TEST")) PluginLog.Warning($"{message}");
-            if (!message.IsNullOrEmpty()) PluginLog.Log($"{message}");
+            if (!message.IsNullOrEmpty()) eventHandle.SetLog($"{message}");
             //if (arg0 == 0x40000005 || arg1 == 0x40000005) PluginLog.Warning($"WIPE:{id}");
 
         }
@@ -285,7 +289,7 @@ namespace SamplePlugin
                                                                  data.Effects[3], data.Effects[4], data.Effects[5],
                                                                  data.Effects[6], data.Effects[7], data.Header.rotation,
                                                                  0, targetCount);
-                PluginLog.Log($"21|{DateTime.Now:O}|{message}");
+                eventHandle.SetLog($"21|{DateTime.Now:O}|{message}");
             }
             else
             {
@@ -315,7 +319,7 @@ namespace SamplePlugin
                                                                      (ulong)effects[(i * 8) + 3], (ulong)effects[(i * 8) + 4], (ulong)effects[(i * 8) + 5],
                                                                      (ulong)effects[(i * 8) + 6], (ulong)effects[(i * 8) + 7], header.rotation,
                                                                      i, targetCount);
-                    PluginLog.Log($"22|{DateTime.Now:O}|{message}");
+                    eventHandle.SetLog($"22|{DateTime.Now:O}|{message}");
 
                 }
             }
@@ -325,11 +329,12 @@ namespace SamplePlugin
         private unsafe void ClientState_TerritoryChanged(object? sender, ushort e)
         {
             var placeName = territory.GetRow(DalamudApi.ClientState.TerritoryType)?.PlaceName.Value?.Name;
-            PluginLog.Log($"01|{DateTime.Now:O}|{format.FormatChangeZoneMessage(DalamudApi.ClientState.TerritoryType, placeName)}");
+            if (eventHandle != null)
+            eventHandle.SetLog($"01|{DateTime.Now:O}|{format.FormatChangeZoneMessage(DalamudApi.ClientState.TerritoryType, placeName)}");
             MapChange();
         //TODO MAP change
-        //PluginLog.Log($"02|{format.FormatChangePrimaryPlayerMessage(DalamudApi.ClientState.LocalPlayer?.ObjectId,DalamudApi.ClientState.LocalPlayer?.Name.TextValue)}");
-        //PluginLog.Log($"XX|{format.FormatPlayerStatsMessage(DalamudApi.ClientState.TerritoryType,DalamudApi.ClientState.LocalPlayer.ClassJob.Id, DalamudApi.ClientState.LocalPlayer.)}")
+        //eventHandle.SetLog($"02|{format.FormatChangePrimaryPlayerMessage(DalamudApi.ClientState.LocalPlayer?.ObjectId,DalamudApi.ClientState.LocalPlayer?.Name.TextValue)}");
+        //eventHandle.SetLog($"XX|{format.FormatPlayerStatsMessage(DalamudApi.ClientState.TerritoryType,DalamudApi.ClientState.LocalPlayer.ClassJob.Id, DalamudApi.ClientState.LocalPlayer.)}")
         }
 
         private unsafe void MapChange()
@@ -338,7 +343,7 @@ namespace SamplePlugin
             uint MapId = *(uint*)MapIdDungeon == 0 ? *(uint*)MapIdWorld : *(uint*)MapIdDungeon;
             var map = maps.GetRow(MapId);
             //TODO MAP change
-            PluginLog.Log($"40|{DateTime.Now:O}|{format.FormatChangeMapMessage(MapId,map?.PlaceNameRegion.Value?.Name,map?.PlaceName.Value?.Name,map?.PlaceNameSub.Value?.Name)}");
+            eventHandle.SetLog($"40|{DateTime.Now:O}|{format.FormatChangeMapMessage(MapId,map?.PlaceNameRegion.Value?.Name,map?.PlaceName.Value?.Name,map?.PlaceNameSub.Value?.Name)}");
         }
 
         private void WayMark(IntPtr ptr)
@@ -347,7 +352,7 @@ namespace SamplePlugin
             WayMarkHook.Original(ptr);
             var source = DalamudApi.ClientState.LocalPlayer;
             //TODO:Source修复
-            PluginLog.Log($"28|{DateTime.Now:O}|{format.FormatNetworkWaymarkMessage(data.status == 0 ? "Delete" : "Add", (uint)data.markerId, source.ObjectId, source?.Name.TextValue, data.Xint / 1000f, data.Yint / 1000f, data.Zint / 1000f)}");
+            eventHandle.SetLog($"28|{DateTime.Now:O}|{format.FormatNetworkWaymarkMessage(data.status == 0 ? "Delete" : "Add", (uint)data.markerId, source.ObjectId, source?.Name.TextValue, data.Xint / 1000f, data.Yint / 1000f, data.Zint / 1000f)}");
         }
 
         private unsafe void WayMarkPresent(IntPtr ptr)
@@ -358,7 +363,7 @@ namespace SamplePlugin
             //TODO:Source修复
             for (int i = 0; i < 8; i++)
             {
-                PluginLog.Log($"28|{DateTime.Now:O}|{format.FormatNetworkWaymarkMessage(((uint)data.status & (1 << i)) == 0 ? "Delete" : "Add", (uint)i, source.ObjectId, source?.Name.TextValue, data.Xints[i] / 1000f, data.Yints[i] / 1000f, data.Zints[i] / 1000f)}");
+                eventHandle.SetLog($"28|{DateTime.Now:O}|{format.FormatNetworkWaymarkMessage(((uint)data.status & (1 << i)) == 0 ? "Delete" : "Add", (uint)i, source.ObjectId, source?.Name.TextValue, data.Xints[i] / 1000f, data.Yints[i] / 1000f, data.Zints[i] / 1000f)}");
             }
             
         }
@@ -367,7 +372,7 @@ namespace SamplePlugin
         {
             var data = Marshal.PtrToStructure<FFXIVIpcActorGauge>(ptr2);
             GaugeHook.Original(ptr1,ptr2);
-            PluginLog.Log($"31|0|{DalamudApi.ClientState.LocalPlayer?.Name}|{data.Data0:X}|{data.Data1:X}|{data.Data2:X}");
+            eventHandle.SetLog($"31|0|{DalamudApi.ClientState.LocalPlayer?.Name}|{data.Data0:X}|{data.Data1:X}|{data.Data2:X}");
             //TODO:ID不应为0
 
         }
@@ -383,7 +388,7 @@ namespace SamplePlugin
                 var sta = data.statusEntries[i];
                 var source = DalamudApi.ObjectTable.SearchById(sta.sourceActorId);
                 var maxhp = source is Character ? (uint?)((Character)source).MaxHp : null;
-                PluginLog.Log($"26|{DateTime.Now:O}|{format.FormatNetworkBuffMessage(sta.id,status.GetRow(sta.id)?.Name.RawString,sta.duration,sta.sourceActorId,source?.Name.TextValue,targetId,target?.Name.TextValue,sta.param,target.MaxHp,maxhp)}");
+                eventHandle.SetLog($"26|{DateTime.Now:O}|{format.FormatNetworkBuffMessage(sta.id,status.GetRow(sta.id)?.Name.RawString,sta.duration,sta.sourceActorId,source?.Name.TextValue,targetId,target?.Name.TextValue,sta.param,target.MaxHp,maxhp)}");
             }
                 
             
@@ -392,64 +397,10 @@ namespace SamplePlugin
         }
 
 
-
-        private void GameNetwork_NetworkMessage(System.IntPtr dataPtr, ushort opCode, uint sourceActorId, uint targetActorId, NetworkMessageDirection direction)
-        {
-            if (direction == NetworkMessageDirection.ZoneUp) return;
-            //PluginLog.Log($"{opCode:X}|{dataPtr}");
-            string log = opCode switch
-            {
-                0x0 => HandleChatLog(dataPtr, sourceActorId, targetActorId),
-                //1 => Territory
-                //ChangePrimaryPlayer = 2,
-                //AddCombatant = 3,
-                //RemoveCombatant = 4,
-                //PartyList = 11,
-                //PlayerStats = 12,
-                //StartsCasting = 20,
-                //ActionEffect = 21,
-                //0x0228 => ReceiveAbilityEffect(dataPtr, targetActorId),
-                //AOEActionEffect = 22,
-                //CancelAction = 23,
-                //DoTHoT = 24,
-                //Death = 25,
-                //StatusAdd = 26,
-                0x01D4 => $"{Marshal.PtrToStructure<ActorControl.ActorControlStruct>(dataPtr).category}",
-                //TargetIcon = 27,
-                //WaymarkMarker = 28,
-                //SignMarker = 29,
-                //StatusRemove = 30,
-                //Gauge = 31,
-                //World = 32,
-                //Director = 33,
-                //NameToggle = 34,
-                //Tether = 35,
-                //LimitBreak = 36,
-                //EffectResult = 37,
-                //StatusList = 38,
-                //UpdateHp = 39,
-                //ChangeMap = 40,
-                //SystemLogMessage = 41,
-                //StatusList3 = 42,
-                //Settings = 249,
-                //Process = 250,
-                //Debug = 251,
-                //PacketDump = 252,
-                //Version = 253,
-                //Error = 254
-
-
-                _ => ""
-            };
-            //if (!string.IsNullOrEmpty(log)) PluginLog.Warning(log);
-
-        }
-
         public void Dispose()
         {
             this.WindowSystem.RemoveAllWindows();
             this.CommandManager.RemoveHandler(CommandName);
-            DalamudApi.GameNetwork.NetworkMessage -= GameNetwork_NetworkMessage;
             DalamudApi.ClientState.TerritoryChanged -= ClientState_TerritoryChanged;
             DalamudApi.Framework.Update -= PartyChanged;
             ActorControlSelfHook.Dispose();
@@ -460,7 +411,7 @@ namespace SamplePlugin
             GaugeHook.Dispose();
             EffectResultHook.Dispose();
             DalamudApi.Framework.Update -= CompareObjects;
-            }
+        }
 
         private void OnCommand(string command, string args)
         {
