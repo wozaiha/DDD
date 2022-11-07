@@ -6,19 +6,19 @@ This is not designed to be the simplest possible example, but it is also not des
 
 ## Main Points
 
-    ChatLog = 0,不管
+    ChatLog = 0,先不管
     
     Territory = 1,done,但是ACT资源文件翻译和本地有区别是什么鬼
     
     ChangePrimaryPlayer = 2,logout？
     
-    AddCombatant = 3,
+    AddCombatant = 3, done
     
-    RemoveCombatant = 4,
+    RemoveCombatant = 4,done
     
     PartyList = 11,拿partylist 每帧比较
     
-    PlayerStats = 12,这是哪个包？
+    PlayerStats = 12,
     
     StartsCasting = 20,done
     
@@ -44,13 +44,9 @@ This is not designed to be the simplest possible example, but it is also not des
     
     Gauge = 31,done
     
-    //这仨大概也是actorcontrol？
-
-    World = 32,
+    Director = 33,done
     
-    Director = 33,
-    
-    NameToggle = 34,
+    NameToggle = 34, done
     
     Tether = 35,done(取消连线ACT没写)
     
@@ -62,9 +58,9 @@ This is not designed to be the simplest possible example, but it is also not des
     
     UpdateHp = 39, 
     
-    ChangeMap = 40,区别还挺大的,抄radar?
+    ChangeMap = 40,抄radar?
     
-    SystemLogMessage = 41,不管
+    SystemLogMessage = 41,done
     
     StatusList3 = 42,
 //以下不管
