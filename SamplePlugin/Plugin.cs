@@ -76,6 +76,7 @@ namespace SamplePlugin
         public IntPtr MapIdWorld { get; private set; }
 
         private int partyLength = 0;
+        private long lastTime;
 
         public Event eventHandle;
 
@@ -154,10 +155,22 @@ namespace SamplePlugin
             DalamudApi.ClientState.TerritoryChanged += ClientState_TerritoryChanged;
             DalamudApi.Framework.Update += PartyChanged;
             DalamudApi.Framework.Update += CompareObjects;
+
+            DalamudApi.GameNetwork.NetworkMessage += GameNetworkOnNetworkMessage;
+        }
+
+        private void GameNetworkOnNetworkMessage(IntPtr dataptr, ushort opcode, uint sourceactorid, uint targetactorid, NetworkMessageDirection direction)
+        {
+            var data = Marshal.PtrToStructure<FFXIVIpcPlayerStats>(dataptr);
+            if (opcode == 356) 
+                PluginLog.Warning($"GOT OPCode:{opcode}:{data.attackPower}");
         }
 
         private void CompareObjects(Dalamud.Game.Framework framework)
         {
+            var now = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+            if (now - lastTime < 100) return;
+            lastTime = now;
             List<GameObject> newlist = new List<GameObject>();
             foreach (var obj in DalamudApi.ObjectTable)
             {
@@ -409,6 +422,8 @@ namespace SamplePlugin
             EffectResultHook.Dispose();
             DalamudApi.Framework.Update -= CompareObjects;
             //new IPC().Unsub();
+
+            DalamudApi.GameNetwork.NetworkMessage -= GameNetworkOnNetworkMessage;
         }
 
         private void OnCommand(string command, string args)
