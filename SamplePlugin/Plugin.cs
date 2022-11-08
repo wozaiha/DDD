@@ -70,14 +70,14 @@ namespace SamplePlugin
         private delegate void EffectResultDelegate(uint targetId, IntPtr ptr, byte a3);
         private Hook<EffectResultDelegate> EffectResultHook;
 
-        private List<GameObject> objects = new List<GameObject>();
+        private List<GameObject> objects = new();
 
         public IntPtr MapIdDungeon { get; private set; }
         public IntPtr MapIdWorld { get; private set; }
 
         private int partyLength = 0;
 
-        private Event eventHandle;
+        public Event eventHandle;
 
         public Plugin(
             [RequiredVersion("1.0")] DalamudPluginInterface pluginInterface,
@@ -92,6 +92,8 @@ namespace SamplePlugin
             DalamudApi.Initialize(this, this.PluginInterface);
 
             eventHandle = new Event();
+            new IPC().InitIpc(this);
+            //new IPC().InitSub(this);
 
             #region Hook
 
@@ -143,18 +145,15 @@ namespace SamplePlugin
             this.PluginInterface.UiBuilder.Draw += DrawUI;
             this.PluginInterface.UiBuilder.OpenConfigUi += DrawConfigUI;
 
-            //opCodes = ReadOpcode();
             territory = DalamudApi.DataManager.Excel.GetSheet<TerritoryType>();
             actions = DalamudApi.DataManager.Excel.GetSheet<Action>();
             status = DalamudApi.DataManager.Excel.GetSheet<Status>();
             maps = DalamudApi.DataManager.Excel.GetSheet<Map>();
             worlds = DalamudApi.DataManager.Excel.GetSheet<World>();
 
-            //DalamudApi.ClientState.TerritoryChanged += ClientState_TerritoryChanged;
+            DalamudApi.ClientState.TerritoryChanged += ClientState_TerritoryChanged;
             DalamudApi.Framework.Update += PartyChanged;
             DalamudApi.Framework.Update += CompareObjects;
-
-
         }
 
         private void CompareObjects(Dalamud.Game.Framework framework)
@@ -329,7 +328,6 @@ namespace SamplePlugin
         private unsafe void ClientState_TerritoryChanged(object? sender, ushort e)
         {
             var placeName = territory.GetRow(DalamudApi.ClientState.TerritoryType)?.PlaceName.Value?.Name;
-            if (eventHandle != null)
             eventHandle.SetLog($"01|{DateTime.Now:O}|{format.FormatChangeZoneMessage(DalamudApi.ClientState.TerritoryType, placeName)}");
             MapChange();
         //TODO MAP change
@@ -405,12 +403,12 @@ namespace SamplePlugin
             DalamudApi.Framework.Update -= PartyChanged;
             ActorControlSelfHook.Dispose();
             ReceiveAbilityHook.Dispose();
-            //NpcSpawnHook.Dispose();
             CastHook.Dispose();
             WayMarkHook.Dispose();
             GaugeHook.Dispose();
             EffectResultHook.Dispose();
             DalamudApi.Framework.Update -= CompareObjects;
+            //new IPC().Unsub();
         }
 
         private void OnCommand(string command, string args)
@@ -428,7 +426,7 @@ namespace SamplePlugin
         {
             WindowSystem.GetWindow("A Wonderful Configuration Window").IsOpen = true;
         }
-
+            
         public string HandleChatLog(IntPtr ptr, uint sourceActorId, uint targetActorId)
         {
             var data = Marshal.PtrToStructure<Machina.FFXIV.Headers.Server_SystemLogMessage>(ptr);

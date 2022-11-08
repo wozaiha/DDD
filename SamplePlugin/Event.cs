@@ -12,7 +12,7 @@ namespace SamplePlugin
         protected virtual void NewLog(string log)
         {
             PluginLog.Debug(log);
-            OnNewLog?.Invoke(null,log);
+            OnNewLog?.Invoke(this,log);
         }
 
         public void SetLog(string log)
