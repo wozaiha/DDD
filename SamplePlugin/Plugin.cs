@@ -168,7 +168,7 @@ namespace DDD
             DalamudApi.Framework.Update += PartyChanged;
             DalamudApi.Framework.Update += CompareObjects;
 
-            DalamudApi.GameNetwork.NetworkMessage += GameNetworkOnNetworkMessage;
+            //DalamudApi.GameNetwork.NetworkMessage += GameNetworkOnNetworkMessage;
         }
 
         private void GameNetworkOnNetworkMessage(IntPtr dataptr, ushort opcode, uint sourceactorid, uint targetactorid, NetworkMessageDirection direction)
@@ -278,12 +278,11 @@ namespace DDD
                 //(ActorControlCategory) => 
 
                 //$"TESTING::{id}:{entityId:X}:0={arg0:X}:1={arg1:X}:2={arg2}:3={arg3:X}:4={arg4}:5={arg5}:6={targetId:X}",
-                _ => $"{id}"
+                _ => ""
 
             };
-            PluginLog.Warning($"{message}");
+            //PluginLog.Warning($"{message}");
             if (!message.IsNullOrEmpty()) eventHandle.SetLog($"{message}");
-            //if (arg0 == 0x40000005 || arg1 == 0x40000005) PluginLog.Warning($"WIPE:{id}");
 
         }
 
@@ -471,7 +470,7 @@ namespace DDD
             DalamudApi.Framework.Update -= CompareObjects;
             //new IPC().Unsub();
 
-            DalamudApi.GameNetwork.NetworkMessage -= GameNetworkOnNetworkMessage;
+            //DalamudApi.GameNetwork.NetworkMessage -= GameNetworkOnNetworkMessage;
         }
 
         private void OnCommand(string command, string args)
