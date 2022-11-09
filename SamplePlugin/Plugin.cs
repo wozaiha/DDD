@@ -70,6 +70,10 @@ namespace SamplePlugin
         private delegate void EffectResultDelegate(uint targetId, IntPtr ptr, byte a3);
         private Hook<EffectResultDelegate> EffectResultHook;
 
+        private delegate void BuffList1(uint sourceId, IntPtr effectList, byte c);
+        private Hook<BuffList1> BuffList1Hook;
+
+
         private List<GameObject> objects = new();
 
         public IntPtr MapIdDungeon { get; private set; }
@@ -128,6 +132,10 @@ namespace SamplePlugin
                 EffectResultHook = Hook<EffectResultDelegate>.FromAddress(
                     DalamudApi.SigScanner.ScanText("48 8B C4 44 88 40 18 89 48 08"), EffectResult);
                 EffectResultHook.Enable();
+
+                BuffList1Hook = Hook<BuffList1>.FromAddress(
+                    DalamudApi.SigScanner.ScanText("E8 ?? ?? ?? ?? 40 84 ED 75 0D"), BuffList1Do);
+                BuffList1Hook.Enable();
 
                 MapIdDungeon = DalamudApi.SigScanner.GetStaticAddressFromSig("44 8B 3D ?? ?? ?? ?? 45 85 FF");
                 MapIdWorld = DalamudApi.SigScanner.GetStaticAddressFromSig("44 0F 44 3D ?? ?? ?? ??");
@@ -426,6 +434,27 @@ namespace SamplePlugin
             eventHandle.SetLog($"12|{DateTime.Now:O}|{format.FormatPlayerStatsMessage(player.LocalContentId,player.Job, player.Str, player.Dex, player.Vit, player.Int, player.Mnd, player.Pie, player.Attack, player.DirectHit, player.Crit, player.AttackMagicPotency, player.HealMagicPotency, player.Det, player.SkillSpeed, player.SpellSpeed, player.Tenacity)}");
         }
 
+        private void BuffList1Do(uint sourceId, IntPtr b, byte c)
+        {
+            var effectList = Marshal.PtrToStructure<StatusEffectList>(b);
+            BuffList1Hook.Original(sourceId, b, c);
+            var array = new uint[93];
+            array[0] = effectList.Unknown1;
+            array[1] = effectList.Unknown2;
+            for (var i = 0; i < 30; i++)
+            {
+                if (effectList.Effects[i].StatusID == 0) continue;
+                array[i * 3 + 3] = (uint)(effectList.Effects[i].StatusID + (effectList.Effects[i].StackCount << 16) + (effectList.Effects[(int)i].Param << 24));
+                array[i * 3 + 3 + 1] = (uint)effectList.Effects[i].RemainingTime;
+                array[i * 3 + 3 + 2] = (uint)effectList.Effects[i].SourceID;
+            }
+
+            var jobLevels = (uint)(effectList.JobID + (effectList.Level1 << 8) + (effectList.Level2 << 16) + (effectList.Level3 << 24));
+            var combatantById = DalamudApi.ObjectTable.SearchById(sourceId);
+            var text = format.FormatStatusListMessage(sourceId, combatantById?.Name.TextValue, jobLevels, effectList.CurrentHP, effectList.MaxHP, effectList.CurrentMP, effectList.MaxMP, effectList.DamageShield, combatantById?.Position.X, combatantById?.Position.Y, combatantById?.Position.Z, combatantById?.Rotation, array);
+            eventHandle.SetLog($"38||{text}");
+        }
+
         public void Dispose()
         {
             this.WindowSystem.RemoveAllWindows();
@@ -438,6 +467,7 @@ namespace SamplePlugin
             WayMarkHook.Dispose();
             GaugeHook.Dispose();
             EffectResultHook.Dispose();
+            BuffList1Hook.Dispose();
             DalamudApi.Framework.Update -= CompareObjects;
             //new IPC().Unsub();
 

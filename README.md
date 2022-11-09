@@ -54,7 +54,7 @@ This is not designed to be the simplest possible example, but it is also not des
     
     EffectResult = 37,NetworkActionSync,
     
-    StatusList = 38,
+    StatusList = 38,EffectList1 done
     
     UpdateHp = 39, 
     
