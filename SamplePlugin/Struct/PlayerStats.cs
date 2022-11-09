@@ -1,3 +1,5 @@
+using System.Runtime.InteropServices;
+
 namespace SamplePlugin.Struct
 {
     public unsafe struct FFXIVIpcPlayerStats
@@ -35,6 +37,86 @@ namespace SamplePlugin.Struct
         public uint perception;
 
         // todo: what is here?
-        fixed  uint unknown[26];
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 26*4)]
+        public byte[] unknown;
     };
+
+    [StructLayout(LayoutKind.Explicit, Pack = 1)]
+    public struct PlayerStruct64
+    {
+        [FieldOffset(88)]
+        public ulong LocalContentId;
+
+        [FieldOffset(106)]
+        public byte Job;
+
+        [FieldOffset(368)]
+        public uint Str;
+
+        [FieldOffset(372)]
+        public uint Dex;
+
+        [FieldOffset(376)]
+        public uint Vit;
+
+        [FieldOffset(380)]
+        public uint Int;
+
+        [FieldOffset(384)]
+        public uint Mnd;
+
+        [FieldOffset(388)]
+        public uint Pie;
+
+        [FieldOffset(440)]
+        public uint Tenacity;
+
+        [FieldOffset(444)]
+        public uint Attack;
+
+        [FieldOffset(452)]
+        public uint DirectHit;
+
+        [FieldOffset(472)]
+        public uint Crit;
+
+        [FieldOffset(496)]
+        public uint AttackMagicPotency;
+
+        [FieldOffset(500)]
+        public uint HealMagicPotency;
+
+        [FieldOffset(540)]
+        public uint Det;
+
+        [FieldOffset(544)]
+        public uint SkillSpeed;
+
+        [FieldOffset(548)]
+        public uint SpellSpeed;
+
+        public override bool Equals(object? obj)
+        {
+            if (obj is not PlayerStruct64 player) return false;
+            var eq = true;
+            eq &= LocalContentId == player.LocalContentId;
+            eq &= Job == player.Job;
+            eq &= Str == player.Str;
+            eq &= Dex == player.Dex;
+            eq &= Vit == player.Vit;
+            eq &= Int == player.Int;
+            eq &= Mnd == player.Mnd;
+            eq &= Pie == player.Pie;
+            eq &= Tenacity == player.Tenacity;
+            eq &= Attack == player.Attack;
+            eq &= DirectHit == player.DirectHit;
+            eq &= Crit == player.Crit;
+            eq &= AttackMagicPotency == player.AttackMagicPotency;
+            eq &= HealMagicPotency == player.HealMagicPotency;
+            eq &= Det == player.Det;
+            eq &= SkillSpeed == player.SkillSpeed;
+            eq &= SpellSpeed == player.SpellSpeed;
+            return eq;
+        }
+    }
 };

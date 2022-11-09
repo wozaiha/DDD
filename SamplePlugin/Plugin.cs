@@ -75,8 +75,13 @@ namespace SamplePlugin
         public IntPtr MapIdDungeon { get; private set; }
         public IntPtr MapIdWorld { get; private set; }
 
+        public IntPtr PlayerStat;
+        private PlayerStruct64 playerstat;
+
         private int partyLength = 0;
         private long lastTime;
+        private uint oldMap;
+        private uint plID;
 
         public Event eventHandle;
 
@@ -120,14 +125,13 @@ namespace SamplePlugin
                     DalamudApi.SigScanner.ScanText("E8 ?? ?? ?? ?? 80 BE ?? ?? ?? ?? ?? 0F 83 ?? ?? ?? ??"), Gauge);
                 GaugeHook.Enable();
 
-                
                 EffectResultHook = Hook<EffectResultDelegate>.FromAddress(
                     DalamudApi.SigScanner.ScanText("48 8B C4 44 88 40 18 89 48 08"), EffectResult);
                 EffectResultHook.Enable();
 
                 MapIdDungeon = DalamudApi.SigScanner.GetStaticAddressFromSig("44 8B 3D ?? ?? ?? ?? 45 85 FF");
                 MapIdWorld = DalamudApi.SigScanner.GetStaticAddressFromSig("44 0F 44 3D ?? ?? ?? ??");
-            
+                PlayerStat = DalamudApi.SigScanner.GetStaticAddressFromSig("83 F9 FF 74 12 44 8B 04 8E 8B D3 48 8D 0D");
 
             #endregion
 
@@ -208,10 +212,13 @@ namespace SamplePlugin
             }
 
             objects = newlist;
+            PlayerState();
         }
 
         private void PartyChanged(Dalamud.Game.Framework framework)
         {
+            MapChange();
+            if (DalamudApi.ClientState.LocalPlayer != null) CheckPlayer();
             if (partyLength == DalamudApi.PartyList.Length) return;
             partyLength = DalamudApi.PartyList.Length;
                 var lists = new List<uint>();
@@ -259,15 +266,14 @@ namespace SamplePlugin
                 ActorControlCategory.Tether => $"35|{DateTime.Now:O}|{format.FormatNetworkTetherMessage(entityId, entity.Name.TextValue, arg2, DalamudApi.ObjectTable.SearchById(arg2)?.Name.TextValue ?? "",arg0,arg1,arg2,arg3,arg4,arg5)}",
                 //TODO:LimitBreak - Line 36
                 ActorControlCategory.LogMsg => $"41|{DateTime.Now:O}|{DalamudApi.ClientState.LocalContentId:X2}|{arg0:X2}|{arg1:X2}|{arg2:X2}|{arg3:X2}",
-                
-                
-
+                //ActorControlCategory.HpSetStat => $"39|{DateTime.Now:O}|{format.FormatUpdateHpMpTp()}
+                //(ActorControlCategory) => 
 
                 //$"TESTING::{id}:{entityId:X}:0={arg0:X}:1={arg1:X}:2={arg2}:3={arg3:X}:4={arg4}:5={arg5}:6={targetId:X}",
+                _ => $"{id}"
 
-                _ => ""
             };
-            if (message.Contains("TEST")) PluginLog.Warning($"{message}");
+            PluginLog.Warning($"{message}");
             if (!message.IsNullOrEmpty()) eventHandle.SetLog($"{message}");
             //if (arg0 == 0x40000005 || arg1 == 0x40000005) PluginLog.Warning($"WIPE:{id}");
 
@@ -350,11 +356,19 @@ namespace SamplePlugin
 
         private unsafe void MapChange()
         {
-            
             uint MapId = *(uint*)MapIdDungeon == 0 ? *(uint*)MapIdWorld : *(uint*)MapIdDungeon;
+            if (oldMap != MapId) return;
+            oldMap = MapId;
             var map = maps.GetRow(MapId);
             //TODO MAP change
             eventHandle.SetLog($"40|{DateTime.Now:O}|{format.FormatChangeMapMessage(MapId,map?.PlaceNameRegion.Value?.Name,map?.PlaceName.Value?.Name,map?.PlaceNameSub.Value?.Name)}");
+        }
+
+        private void CheckPlayer()
+        {
+            if (DalamudApi.ClientState.LocalPlayer is null || plID == DalamudApi.ClientState.LocalPlayer.ObjectId) return;
+            plID = DalamudApi.ClientState.LocalPlayer.ObjectId;
+            eventHandle.SetLog($"02|{DateTime.Now:O}|{format.FormatChangePrimaryPlayerMessage(plID,DalamudApi.ClientState.LocalPlayer.Name.TextValue)}");
         }
 
         private void WayMark(IntPtr ptr)
@@ -401,12 +415,16 @@ namespace SamplePlugin
                 var maxhp = source is Character ? (uint?)((Character)source).MaxHp : null;
                 eventHandle.SetLog($"26|{DateTime.Now:O}|{format.FormatNetworkBuffMessage(sta.id,status.GetRow(sta.id)?.Name.RawString,sta.duration,sta.sourceActorId,source?.Name.TextValue,targetId,target?.Name.TextValue,sta.param,target.MaxHp,maxhp)}");
             }
-                
-            
-            
-            
         }
 
+        private void PlayerState()
+        {
+            if (PlayerStat == IntPtr.Zero) return;
+            var player = Marshal.PtrToStructure<PlayerStruct64>(PlayerStat);
+            if (playerstat.Equals(player)) return;
+            playerstat = player;
+            eventHandle.SetLog($"12|{DateTime.Now:O}|{format.FormatPlayerStatsMessage(player.LocalContentId,player.Job, player.Str, player.Dex, player.Vit, player.Int, player.Mnd, player.Pie, player.Attack, player.DirectHit, player.Crit, player.AttackMagicPotency, player.HealMagicPotency, player.Det, player.SkillSpeed, player.SpellSpeed, player.Tenacity)}");
+        }
 
         public void Dispose()
         {
@@ -440,35 +458,6 @@ namespace SamplePlugin
         public void DrawConfigUI()
         {
             WindowSystem.GetWindow("A Wonderful Configuration Window").IsOpen = true;
-        }
-            
-        public string HandleChatLog(IntPtr ptr, uint sourceActorId, uint targetActorId)
-        {
-            var data = Marshal.PtrToStructure<Machina.FFXIV.Headers.Server_SystemLogMessage>(ptr);
-            return format.FormatChatMessage(0, "", "");
-        }
-
-        public string Dump(IntPtr ptr, uint sourceActorId, uint targetActorId, ushort opCode)
-        {
-            return string.Empty;
-        }
-
-        public string HandleAbility(IntPtr ptr, uint sourceActorId, uint targetActorId)
-        {
-            var data = Marshal.PtrToStructure<Struct.FFXIVIpcEffectResult>(ptr);
-            var target = DalamudApi.ObjectTable.SearchById(targetActorId);
-            var source = DalamudApi.ObjectTable.SearchById(sourceActorId);
-            return null;
-        }
-
-        public static float? UShortToFloat(ushort? val)
-        {
-            return (val - 0x8000) / 32.767f;
-        }
-
-        public static float? UShortToRotation(ushort? val)
-        {
-            return (val - 0x7FFF) * 3.1415926f / 32767f;
         }
 
     }

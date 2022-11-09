@@ -10,13 +10,13 @@ This is not designed to be the simplest possible example, but it is also not des
     
     Territory = 1,done,但是ACT资源文件翻译和本地有区别是什么鬼
     
-    ChangePrimaryPlayer = 2,logout？
+    ChangePrimaryPlayer = 2,done
     
-    AddCombatant = 3, done
+    AddCombatant = 3, done,100ms比较一次
     
     RemoveCombatant = 4,done
     
-    PartyList = 11,拿partylist 每帧比较
+    PartyList = 11,done,拿partylist 每帧比较
     
     PlayerStats = 12,
     
@@ -52,13 +52,13 @@ This is not designed to be the simplest possible example, but it is also not des
     
     LimitBreak = 36, 
     
-    EffectResult = 37,这玩意怎么触发的
+    EffectResult = 37,NetworkActionSync,
     
-    StatusList = 38,object结构拿？
+    StatusList = 38,
     
     UpdateHp = 39, 
     
-    ChangeMap = 40,抄radar?
+    ChangeMap = 40,done
     
     SystemLogMessage = 41,done
     
