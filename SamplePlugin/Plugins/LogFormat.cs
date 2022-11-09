@@ -5,7 +5,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 
-namespace SamplePlugin.Plugins;
+namespace DDD.Plugins;
 
 public class LogFormat : ILogFormat
 {

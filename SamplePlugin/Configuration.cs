@@ -2,7 +2,7 @@ using System;
 using Dalamud.Configuration;
 using Dalamud.Plugin;
 
-namespace SamplePlugin
+namespace DDD
 {
     [Serializable]
     public class Configuration : IPluginConfiguration
@@ -17,12 +17,12 @@ namespace SamplePlugin
 
         public void Initialize(DalamudPluginInterface pluginInterface)
         {
-            this.PluginInterface = pluginInterface;
+            PluginInterface = pluginInterface;
         }
 
         public void Save()
         {
-            this.PluginInterface!.SavePluginConfig(this);
+            PluginInterface!.SavePluginConfig(this);
         }
     }
 }

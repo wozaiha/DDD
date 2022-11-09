@@ -1,24 +1,22 @@
 using System;
-using System.Runtime.InteropServices;
 using Dalamud.Logging;
-using Dalamud.Plugin;
 using Dalamud.Plugin.Ipc;
 
-namespace SamplePlugin
+namespace DDD
 {
     public class IPC
     {
-        public ICallGateProvider<string,string> IpcProvider;
-        public ICallGateSubscriber<string,string> CallGateSubscriber;
+        public ICallGateProvider<string, string> IpcProvider;
+        public ICallGateSubscriber<string, string> CallGateSubscriber;
         private Plugin Plugin;
 
         public void InitIpc(Plugin plugin)
         {
             try
             {
-                this.Plugin = plugin;
-                IpcProvider = DalamudApi.PluginInterface.GetIpcProvider<string,string>("DDD.Ipc");
-                Plugin.eventHandle.OnNewLog += (sender, str) => IpcProvider.SendMessage(str);;
+                Plugin = plugin;
+                IpcProvider = DalamudApi.PluginInterface.GetIpcProvider<string, string>("DDD.Ipc");
+                Plugin.eventHandle.OnNewLog += (sender, str) => IpcProvider.SendMessage(str); ;
             }
             catch (Exception e)
             {
@@ -33,7 +31,7 @@ namespace SamplePlugin
             var str = "";
             try
             {
-                CallGateSubscriber = DalamudApi.PluginInterface.GetIpcSubscriber<string,string>("DDD.Ipc");
+                CallGateSubscriber = DalamudApi.PluginInterface.GetIpcSubscriber<string, string>("DDD.Ipc");
                 CallGateSubscriber.Subscribe(Action);
             }
             catch (Exception e)
@@ -55,7 +53,7 @@ namespace SamplePlugin
         }
 
     }
-    
+
 
 
 

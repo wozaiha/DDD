@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices;
 
-namespace SamplePlugin.Struct
+namespace DDD.Struct
 {
     public struct ActorControl
     {

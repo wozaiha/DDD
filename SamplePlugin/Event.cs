@@ -1,8 +1,7 @@
 using System;
-using System.Runtime.InteropServices;
 using Dalamud.Logging;
 
-namespace SamplePlugin
+namespace DDD
 {
     public class Event
     {
@@ -12,7 +11,7 @@ namespace SamplePlugin
         protected virtual void NewLog(string log)
         {
             PluginLog.Debug(log);
-            OnNewLog?.Invoke(this,log);
+            OnNewLog?.Invoke(this, log);
         }
 
         public void SetLog(string log)

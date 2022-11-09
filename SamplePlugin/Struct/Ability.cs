@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices;
 
-namespace SamplePlugin.Struct
+namespace DDD.Struct
 {
     [StructLayout(LayoutKind.Explicit, Size = 0x2A)]
     public struct Header
@@ -79,7 +79,7 @@ namespace SamplePlugin.Struct
     public unsafe struct Ability24
     {
         public Header header;
-        public fixed ulong enrty[24 * 8]; 
+        public fixed ulong enrty[24 * 8];
         public Ender ender;
         public fixed ulong targetId[24];
     }

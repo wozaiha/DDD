@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices;
 
-namespace SamplePlugin.Struct
+namespace DDD.Struct
 {
     unsafe struct FFXIVIpcStatusEffectList
     {
@@ -14,7 +14,7 @@ namespace SamplePlugin.Struct
         byte shieldPercentage;
         byte unknown1;
         ushort unknown2;
-        fixed byte effect[16*30];
+        fixed byte effect[16 * 30];
         uint padding;
     };
 

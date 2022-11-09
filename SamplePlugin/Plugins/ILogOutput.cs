@@ -1,7 +1,7 @@
 using System;
 using System.Threading;
 
-namespace SamplePlugin.Plugins;
+namespace DDD.Plugins;
 
 public interface ILogOutput
 {

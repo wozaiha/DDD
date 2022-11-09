@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices;
 
-namespace SamplePlugin.Struct
+namespace DDD.Struct
 {
     public unsafe struct FFXIVIpcPlayerStats
     {
@@ -37,7 +37,7 @@ namespace SamplePlugin.Struct
         public uint perception;
 
         // todo: what is here?
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 26*4)]
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 26 * 4)]
         public byte[] unknown;
     };
 

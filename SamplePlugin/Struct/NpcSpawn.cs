@@ -1,4 +1,4 @@
-namespace SamplePlugin.Struct
+namespace DDD.Struct
 {
     internal struct NpcSpawn
     {

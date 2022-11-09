@@ -1,4 +1,4 @@
-namespace SamplePlugin.Struct
+namespace DDD.Struct
 {
     struct FFXIVIpcUpdateHpMpTp
     {

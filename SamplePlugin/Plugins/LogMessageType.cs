@@ -1,4 +1,4 @@
-namespace SamplePlugin.Plugins;
+namespace DDD.Plugins;
 
 public enum LogMessageType
 {

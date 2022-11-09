@@ -3,9 +3,8 @@ using System.Numerics;
 using Dalamud.Interface.Windowing;
 using ImGuiNET;
 using ImGuiScene;
-using SamplePlugin;
 
-namespace SamplePlugin.Windows;
+namespace DDD.Windows;
 
 public class MainWindow : Window, IDisposable
 {

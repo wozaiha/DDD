@@ -1,10 +1,10 @@
 using System.Runtime.InteropServices;
 
-namespace SamplePlugin.Struct
+namespace DDD.Struct
 {
-   unsafe struct FFXIVIpcEffectResult
-   {
-       private uint unknown0;
+    unsafe struct FFXIVIpcEffectResult
+    {
+        private uint unknown0;
         public uint globalSequence;
         public uint actor_id;
         public uint current_hp;
