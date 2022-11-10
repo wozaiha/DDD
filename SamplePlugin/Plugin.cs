@@ -73,6 +73,9 @@ namespace DDD
         private delegate void BuffList1(uint sourceId, IntPtr effectList, byte c);
         private Hook<BuffList1> BuffList1Hook;
 
+        private delegate void EnvControl(long a1, IntPtr a2);
+        private Hook<EnvControl> EnvControlHook;
+
 
         private List<GameObject> objects = new();
 
@@ -136,6 +139,10 @@ namespace DDD
             BuffList1Hook = Hook<BuffList1>.FromAddress(
                 DalamudApi.SigScanner.ScanText("E8 ?? ?? ?? ?? 40 84 ED 75 0D"), BuffList1Do);
             BuffList1Hook.Enable();
+
+            EnvControlHook = Hook<EnvControl>.FromAddress(
+                DalamudApi.SigScanner.ScanText("48 89 5C 24 ?? 57 48 83 EC ?? 48 8B F9 48 8B DA 48 8B 89 ?? ?? ?? ?? 48 85 C9 74 ?? 48 8B 01 FF 50 ?? 84 C0 74 ?? 48 8B 8F ?? ?? ?? ?? 8B 03 48 8B 91 ?? ?? ?? ?? 39 02 75 ?? 48 83 B9 ?? ?? ?? ?? ?? 74 ?? 0F B6 53 ?? 44 0F B7 4B ?? 44 0F B7 43 ?? E8 ?? ?? ?? ?? 48 8B 5C 24 ?? 48 83 C4 ?? 5F C3 ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? 48 89 5C 24 ?? 57 48 83 EC ?? 33 C0"), EnvControlFunc);
+            EnvControlHook.Enable();
 
             MapIdDungeon = DalamudApi.SigScanner.GetStaticAddressFromSig("44 8B 3D ?? ?? ?? ?? 45 85 FF");
             MapIdWorld = DalamudApi.SigScanner.GetStaticAddressFromSig("44 0F 44 3D ?? ?? ?? ??");
@@ -454,6 +461,13 @@ namespace DDD
             eventHandle.SetLog($"38||{text}");
         }
 
+        unsafe void EnvControlFunc(long a1, IntPtr a2)
+        {
+            var data = Marshal.PtrToStructure<Server_EnvironmentControl>(a2);
+            EnvControlHook.Original(a1, a2);
+            eventHandle.SetLog($"50|{DateTime.Now:O}|{data.FeatureID}|{data.State}|{data.Index}|{data.u0}|{data.u1}|{data.u2}");
+        }
+
         public void Dispose()
         {
             WindowSystem.RemoveAllWindows();
@@ -467,6 +481,7 @@ namespace DDD
             GaugeHook.Dispose();
             EffectResultHook.Dispose();
             BuffList1Hook.Dispose();
+            EnvControlHook.Dispose();
             DalamudApi.Framework.Update -= CompareObjects;
             //new IPC().Unsub();
 
