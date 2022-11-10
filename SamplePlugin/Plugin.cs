@@ -465,7 +465,7 @@ namespace DDD
         {
             var data = Marshal.PtrToStructure<Server_EnvironmentControl>(a2);
             EnvControlHook.Original(a1, a2);
-            eventHandle.SetLog($"50|{DateTime.Now:O}|{data.FeatureID}|{data.State}|{data.Index}|{data.u0}|{data.u1}|{data.u2}");
+            eventHandle.SetLog($"50|{DateTime.Now:O}|{data.FeatureID:X}|{data.State:X}|{data.Index:X}|{data.u0:X}|{data.u1:X}|{data.u2:X}");
         }
 
         public void Dispose()
