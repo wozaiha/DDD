@@ -140,7 +140,7 @@ namespace DDD
             EffectResultHook.Enable();
 
             EffectResultBasicHook = Hook<EffectResultBasicHookDelegate>.FromAddress(
-                DalamudApi.SigScanner.ScanText("40 53 41 54 41 55 48 83 EC 40"), EffectResult);
+                DalamudApi.SigScanner.ScanText("40 53 41 54 41 55 48 83 EC 40"), EffectResultBasic);
             EffectResultBasicHook.Enable();
             
 
@@ -301,8 +301,8 @@ namespace DDD
             var message = id switch
             {
                 ActorControlCategory.CancelCast => $"{format.FormatNetworkCancelMessage(entityId, entity.Name.TextValue, arg2, actions.GetRow(arg2)?.Name, arg1 == 1, arg1 != 1)}",
-                ActorControlCategory.Hot => $"{format.FormatNetworkDoTMessage(entityId, entity.Name.TextValue, true, arg0, arg1, entity?.CurrentHp, entity.MaxHp, entity.CurrentMp, entity.MaxHp, entity?.Position.X, entity?.Position.Z, entity?.Position.Y, entity?.Rotation)}",
-                ActorControlCategory.HoT_DoT => $"{format.FormatNetworkDoTMessage(entityId, entity.Name.TextValue, false, arg0, arg1, entity?.CurrentHp, entity?.MaxHp, entity?.CurrentMp, entity?.MaxHp, entity?.Position.X, entity?.Position.Z, entity?.Position.Y, entity?.Rotation)}",
+                ActorControlCategory.Hot => $"{format.FormatNetworkDoTMessage(entityId, entity.Name.TextValue, true, arg0, arg1, entity?.CurrentHp, entity.MaxHp, entity.CurrentMp, entity.MaxMp, entity?.Position.X, entity?.Position.Z, entity?.Position.Y, entity?.Rotation)}",
+                ActorControlCategory.HoT_DoT => $"{format.FormatNetworkDoTMessage(entityId, entity.Name.TextValue, false, arg0, arg2, entity?.CurrentHp, entity?.MaxHp, entity?.CurrentMp, entity?.MaxHp, entity?.Position.X, entity?.Position.Z, entity?.Position.Y, entity?.Rotation)}",
                 ActorControlCategory.Death => $"{format.FormatNetworkDeathMessage(entityId, entity.Name.TextValue, arg0, DalamudApi.ObjectTable.SearchById(arg0)?.Name.TextValue)}",
                 ActorControlCategory.TargetIcon => $"{format.FormatNetworkTargetIconMessage(entityId, entity.Name.TextValue, arg1, arg2, arg0, arg3, arg4, arg5)}",
                 ActorControlCategory.SetTargetSign => $"{format.FormatNetworkSignMessage(targetId == 0xE0000000 ? "Delete" : "Add", arg0, entityId, entity.Name.TextValue, targetId == 0xE0000000 ? null : (uint)targetId, target?.Name.TextValue ?? "")}",
@@ -316,7 +316,7 @@ namespace DDD
                 //ActorControlCategory.HpSetStat => $"{format.FormatUpdateHpMpTp()}
                 //(ActorControlCategory) => 
 
-                //$"TESTING::{id}:{entityId:X}:0={arg0:X}:1={arg1:X}:2={arg2}:3={arg3:X}:4={arg4}:5={arg5}:6={targetId:X}",
+                //ActorControlCategory.HoT_DoT => $"TESTING::{id}:{entityId:X}:0={arg0:X}:1={arg1:X}:2={arg2}:3={arg3:X}:4={arg4}:5={arg5}:6={targetId:X}",
                 _ => ""
             };
             //PluginLog.Yarning($"{message}");
@@ -448,32 +448,48 @@ namespace DDD
 
         private void EffectResult(uint targetId, IntPtr ptr, byte a3)
         {
-            //PluginLog.Yarning($"EffectResult");
             var data = Marshal.PtrToStructure<FFXIVIpcEffectResult>(ptr);
+            
             EffectResultHook.Original(targetId, ptr, a3);
             if (a3 != 0) return;
             var target = (Character?)DalamudApi.ObjectTable.SearchById(targetId);
-            //for (var i = 0; i < data.entryCount; i++)
-            //{
-            //    var sta = data.statusEntries[i];
-            //    var source = DalamudApi.ObjectTable.SearchById(sta.sourceActorId);
-            //    var maxhp = source is Character ? (uint?)((Character)source).MaxHp : null;
-            //    eventHandle.SetLog(LogMessageType.StatusAdd,format.FormatNetworkBuffMessage(sta.id, status.GetRow(sta.id)?.Name.RawString, sta.duration, sta.sourceActorId, source?.Name.TextValue, targetId, target?.Name.TextValue, sta.param, target?.MaxHp, maxhp));
-            //}
             uint[] array = new uint[20]
             {
-                (uint)(data.unknown1 + (data.classId << 8)), 0u, data.unknown2, data.entryCount, 0u, 0u, 0u, 0u, 0u, 0u,
+                data.Unknown3, 0u, data.Unknown6, data.EffectCount, 0u, 0u, 0u, 0u, 0u, 0u,
                 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u
             };
-            data.entryCount = data.entryCount > 4 ? (byte)4 : data.entryCount;
-            for (int i = 0; i < data.entryCount; i++)
+            var ptr2 = data.Effects;
+            data.EffectCount = data.EffectCount > 4 ? (byte)4 : data.EffectCount;
+            for (int i = 0; i < data.EffectCount; i++)
             {
-                array[4 + i * 4] = (uint)(data.statusEntries[i].id + (data.statusEntries[i].unknown3 << 16) + (data.statusEntries[i].index << 24));
-                array[4 + i * 4 + 1] = (uint)(data.statusEntries[i].unknown4 + (data.statusEntries[i].param << 16));
-                array[4 + i * 4 + 2] = BitConverter.ToUInt32(BitConverter.GetBytes(data.statusEntries[i].duration), 0);
-                array[4 + i * 4 + 3] = data.statusEntries[i].sourceActorId;
+                array[4 + i * 4] = (uint)(ptr2[i].EffectID + (ptr2[i].unknown1 << 16) + (ptr2[i].EffectIndex << 24));
+                array[4 + i * 4 + 1] = (uint)(ptr2[i].param + (ptr2[i].unknown3 << 16));
+                array[4 + i * 4 + 2] = BitConverter.ToUInt32(BitConverter.GetBytes(ptr2[i].duration), 0);
+                array[4 + i * 4 + 3] = ptr2[i].SourceActorID;
             }
-            eventHandle.SetLog(LogMessageType.EffectResult, format.FormatEffectResultMessage(targetId,target?.Name.TextValue,data.globalSequence,data.current_hp,data.max_hp,data.current_mp,10000u,data.shieldPercentage,target?.Position.X,target?.Position.Z,target?.Position.Y,target?.Rotation,array));
+            eventHandle.SetLog(LogMessageType.EffectResult, format.FormatEffectResultMessage(targetId,target?.Name.TextValue,data.RelatedActionSequence,data.CurrentHP,data.MaxHP,data.CurrentMP, data.Unknown3, data.DamageShield,target?.Position.X,target?.Position.Z,target?.Position.Y,target?.Rotation,array));
+            for (var i = 0; i < data.EffectCount; i++)
+            {
+                var sta = data.Effects[i];
+                var source = DalamudApi.ObjectTable.SearchById(sta.SourceActorID);
+                var maxhp = source is Character ? (uint?)((Character)source).MaxHp : null;
+                eventHandle.SetLog(LogMessageType.StatusAdd, format.FormatNetworkBuffMessage(sta.EffectID, status.GetRow(sta.EffectID)?.Name.RawString, sta.duration, sta.SourceActorID, source?.Name.TextValue, targetId, target?.Name.TextValue, sta.param, target?.MaxHp, maxhp));
+            }
+
+
+        }
+
+        private void EffectResultBasic(uint targetId, IntPtr ptr, byte a3)
+        {
+            var data = Marshal.PtrToStructure<FFXIVIpcEffectResult>(ptr);
+
+            EffectResultBasicHook.Original(targetId, ptr, a3);
+            
+            var target = (Character?)DalamudApi.ObjectTable.SearchById(targetId);
+            uint[] array = Array.Empty<uint>();
+            var ptr2 = data.Effects;
+
+            eventHandle.SetLog(LogMessageType.EffectResult, format.FormatEffectResultMessage(targetId, target?.Name.TextValue, data.RelatedActionSequence, data.CurrentHP, null,null,null, null, target?.Position.X, target?.Position.Z, target?.Position.Y, target?.Rotation, array));
         }
 
         private void PlayerState()

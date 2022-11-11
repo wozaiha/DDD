@@ -32,7 +32,6 @@ namespace DDD
         {
             if (!File.Exists(logFileName)) NewFile();
             if (type is LogMessageType.Version or LogMessageType.Territory) logIndex = 0;
-            else logIndex++;
             //log = (((int)type).ToString(CultureInfo.InvariantCulture).PadLeft(2, '0') + "|" + $"{DateTime.Now:O}" + "|" + log).Replace('\0', ' ');
             var num = (int)type;
             var array = new string[5];
