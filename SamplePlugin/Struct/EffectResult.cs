@@ -22,10 +22,10 @@ namespace DDD.Struct
     struct StatusEntry
     {
         public byte index; // which position do i display this
-        byte unknown3;
+        public byte unknown3;
         public ushort id;
         public ushort param;
-        ushort unknown4; // Sort this out (old right half of power/param property)
+        public ushort unknown4; // Sort this out (old right half of power/param property)
         public float duration;
         public uint sourceActorId;
     }

@@ -44,7 +44,7 @@ public class LogOutput : ILogOutput
         //try
         //{
         //	using SHA256 sHA = SHA256.Create();
-        //	sHA.ComputeHash(Encoding.UTF8.GetBytes("1234567890"));
+        //	sHA.ComputeHash(Encoding.UTF8.GetBytes("#1234567890"));
         //}
         //catch (Exception)
         //{
@@ -110,12 +110,8 @@ public class LogOutput : ILogOutput
         }
     }
 
-    public string u_65535(string text)
+    public static string u_65535(string text)
     {
-        if (_disableHash)
-        {
-            return "0";
-        }
         using var sHA = SHA256.Create();
         return u_49152(sHA.ComputeHash(Encoding.UTF8.GetBytes(text)));
     }

@@ -37,5 +37,6 @@ public enum LogMessageType
     Debug = 251,
     PacketDump = 252,
     Version = 253,
-    Error = 254
+    Error = 254,
+    EnvironmentControl = 257,
 }
