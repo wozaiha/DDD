@@ -28,16 +28,24 @@ namespace DDD
             OnNewLog?.Invoke(this, log);
         }
 
-        public void SetLog(LogMessageType type, string log)
+        public void SetLog(LogMessageType type, string text)
         {
             if (!File.Exists(logFileName)) NewFile();
             if (type is LogMessageType.Version or LogMessageType.Territory) logIndex = 0;
             else logIndex++;
-            log = (((int)type).ToString(CultureInfo.InvariantCulture).PadLeft(2, '0') + "|" + $"{DateTime.Now:O}" + "|" + log).Replace('\0', ' ');
-            log = log + "|" + DDD.Plugins.LogOutput.u_65535(log + "|" + logIndex.ToString(CultureInfo.InvariantCulture));
-            sw?.WriteLine(log);
+            //log = (((int)type).ToString(CultureInfo.InvariantCulture).PadLeft(2, '0') + "|" + $"{DateTime.Now:O}" + "|" + log).Replace('\0', ' ');
+            var num = (int)type;
+            var array = new string[5];
+            array[0] = num.ToString(CultureInfo.InvariantCulture).PadLeft(2, '0');
+            array[1] = "|";
+            array[2] = DateTime.Now.ToString("O");
+            array[3] = "|";
+            array[4] = text.Replace('\0', ' ');
+            text = string.Concat(array);
+            text = text + "|" + LogOutput.u_65535(text + "|" + Interlocked.Increment(ref logIndex).ToString(CultureInfo.InvariantCulture));
+            sw?.WriteLine(text);
             sw?.Flush();
-            NewLog(type,log);
+            NewLog(type, text);
         }
 
          public void NewFile()
@@ -53,7 +61,7 @@ namespace DDD
 
              logFileStream = File.Open(logFileName, FileMode.Append,FileAccess.Write,FileShare.Read);
              sw = new StreamWriter(logFileStream, Encoding.UTF8);
-             if (!exist) SetLog(LogMessageType.Version, ((FormattableString)$"FFXIV_ACT_Plugin Version: 2.6.6.1 (0000000000000000)").ToString(CultureInfo.InvariantCulture));
+             if (!exist) SetLog(LogMessageType.Version, ((FormattableString)$"FFXIV_ACT_Plugin Version: 2.6.6.1 (50BCD605C50A749F)").ToString(CultureInfo.InvariantCulture));
 
          }
 

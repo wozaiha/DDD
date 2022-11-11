@@ -71,6 +71,8 @@ namespace DDD
         private delegate void EffectResultDelegate(uint targetId, IntPtr ptr, byte a3);
         private Hook<EffectResultDelegate> EffectResultHook;
 
+        private delegate void EffectResultBasicHookDelegate(uint targetId, IntPtr ptr, byte a3);
+        private Hook<EffectResultBasicHookDelegate> EffectResultBasicHook;
         private delegate void BuffList1(uint sourceId, IntPtr effectList, byte c);
         private Hook<BuffList1> BuffList1Hook;
 
@@ -137,6 +139,11 @@ namespace DDD
                 DalamudApi.SigScanner.ScanText("48 8B C4 44 88 40 18 89 48 08"), EffectResult);
             EffectResultHook.Enable();
 
+            EffectResultBasicHook = Hook<EffectResultBasicHookDelegate>.FromAddress(
+                DalamudApi.SigScanner.ScanText("40 53 41 54 41 55 48 83 EC 40"), EffectResult);
+            EffectResultBasicHook.Enable();
+            
+
             BuffList1Hook = Hook<BuffList1>.FromAddress(
                 DalamudApi.SigScanner.ScanText("E8 ?? ?? ?? ?? 40 84 ED 75 0D"), BuffList1Do);
             BuffList1Hook.Enable();
@@ -175,7 +182,7 @@ namespace DDD
             DalamudApi.ClientState.TerritoryChanged += ClientState_TerritoryChanged;
             DalamudApi.Framework.Update += PartyChanged;
             DalamudApi.Framework.Update += CompareObjects;
-            ClientState_TerritoryChanged(null,0);
+            //ClientState_TerritoryChanged(null,0);
             //eventHandle.NewFile();
             
             //DalamudApi.GameNetwork.NetworkMessage += GameNetworkOnNetworkMessage;
@@ -207,11 +214,11 @@ namespace DDD
                 switch (obj.ObjectKind)
                 {
                     case ObjectKind.Player:
-                        eventHandle.SetLog(LogMessageType.AddCombatant, $"{format.FormatCombatantMessage(obj.ObjectId, obj.OwnerId, obj.Name.TextValue, (int)((PlayerCharacter)obj).ClassJob.Id, ((Character)obj).Level, ((PlayerCharacter)obj).HomeWorld.Id, worlds.GetRow(((PlayerCharacter)obj).HomeWorld.Id).Name.RawString, 0, 0, ((Character)obj).CurrentHp, ((Character)obj).MaxHp, ((Character)obj).CurrentMp, ((Character)obj).MaxMp, obj.Position.X, obj.Position.Y, obj.Position.Z, obj.Rotation)}");
+                        eventHandle.SetLog(LogMessageType.AddCombatant, $"{format.FormatCombatantMessage(obj.ObjectId, obj.OwnerId, obj.Name.TextValue, (int)((PlayerCharacter)obj).ClassJob.Id, ((Character)obj).Level, ((PlayerCharacter)obj).HomeWorld.Id, worlds.GetRow(((PlayerCharacter)obj).HomeWorld.Id).InternalName.RawString, 0, 0, ((Character)obj).CurrentHp, ((Character)obj).MaxHp, ((Character)obj).CurrentMp, ((Character)obj).MaxMp, obj.Position.X, obj.Position.Z, obj.Position.Y, obj.Rotation)}");
 
                         break;
                     case ObjectKind.BattleNpc:
-                        eventHandle.SetLog(LogMessageType.AddCombatant, $"{format.FormatCombatantMessage(obj.ObjectId, obj.OwnerId, obj.Name.TextValue, 0, ((BattleNpc)obj).Level, 0, "", ((BattleNpc)obj).NameId, ((BattleNpc)obj).DataId, ((BattleNpc)obj).CurrentHp, ((BattleNpc)obj).MaxHp, ((BattleNpc)obj).CurrentMp, ((BattleNpc)obj).MaxMp, obj.Position.X, obj.Position.Y, obj.Position.Z, obj.Rotation)}");
+                        eventHandle.SetLog(LogMessageType.AddCombatant, $"{format.FormatCombatantMessage(obj.ObjectId, obj.OwnerId, obj.Name.TextValue, 0, ((BattleNpc)obj).Level, 0, "", ((BattleNpc)obj).NameId, ((BattleNpc)obj).DataId, ((BattleNpc)obj).CurrentHp, ((BattleNpc)obj).MaxHp, ((BattleNpc)obj).CurrentMp, ((BattleNpc)obj).MaxMp, obj.Position.X, obj.Position.Z, obj.Position.Y, obj.Rotation)}");
                         break;
                 }
 
@@ -221,10 +228,10 @@ namespace DDD
                 switch (obj.ObjectKind)
                 {
                     case ObjectKind.Player:
-                        eventHandle.SetLog(LogMessageType.RemoveCombatant, $"{format.FormatCombatantMessage(obj.ObjectId, obj.OwnerId, obj.Name.TextValue, (int)((PlayerCharacter)obj).ClassJob.Id, ((Character)obj).Level, ((PlayerCharacter)obj).HomeWorld.Id, worlds.GetRow(((PlayerCharacter)obj).HomeWorld.Id).Name.RawString, 0, 0, ((Character)obj).CurrentHp, ((Character)obj).MaxHp, ((Character)obj).CurrentMp, ((Character)obj).MaxMp, obj.Position.X, obj.Position.Y, obj.Position.Z, obj.Rotation)}");
+                        eventHandle.SetLog(LogMessageType.RemoveCombatant, $"{format.FormatCombatantMessage(obj.ObjectId, obj.OwnerId, obj.Name.TextValue, (int)((PlayerCharacter)obj).ClassJob.Id, ((Character)obj).Level, ((PlayerCharacter)obj).HomeWorld.Id, worlds.GetRow(((PlayerCharacter)obj).HomeWorld.Id).InternalName.RawString, 0, 0, ((Character)obj).CurrentHp, ((Character)obj).MaxHp, ((Character)obj).CurrentMp, ((Character)obj).MaxMp, obj.Position.X, obj.Position.Z, obj.Position.Y, obj.Rotation)}");
                         break;
                     case ObjectKind.BattleNpc:
-                        eventHandle.SetLog(LogMessageType.RemoveCombatant, $"{format.FormatCombatantMessage(obj.ObjectId, obj.OwnerId, obj.Name.TextValue, 0, ((BattleNpc)obj).Level, 0, "", ((BattleNpc)obj).NameId, ((BattleNpc)obj).DataId, ((BattleNpc)obj).CurrentHp, ((BattleNpc)obj).MaxHp, ((BattleNpc)obj).CurrentMp, ((BattleNpc)obj).MaxMp, obj.Position.X, obj.Position.Y, obj.Position.Z, obj.Rotation)}");
+                        eventHandle.SetLog(LogMessageType.RemoveCombatant, $"{format.FormatCombatantMessage(obj.ObjectId, obj.OwnerId, obj.Name.TextValue, 0, ((BattleNpc)obj).Level, 0, "", ((BattleNpc)obj).NameId, ((BattleNpc)obj).DataId, ((BattleNpc)obj).CurrentHp, ((BattleNpc)obj).MaxHp, ((BattleNpc)obj).CurrentMp, ((BattleNpc)obj).MaxMp, obj.Position.X, obj.Position.Z, obj.Position.Y, obj.Rotation)}");
                         break;
                 }
             }
@@ -253,11 +260,12 @@ namespace DDD
         {
             var data = Marshal.PtrToStructure<ActorCast>(ptr);
             CastHook.Original(source, ptr);
+            var soutceobj = DalamudApi.ObjectTable.SearchById(source);
             var message = format.FormatNetworkCastMessage(source, DalamudApi.ObjectTable.SearchById(source)?.Name.TextValue,
                                             data.TargetID, DalamudApi.ObjectTable.SearchById(data.TargetID)?.Name.TextValue,
                                             data.ActionID, actions.GetRow(data.ActionID).Name, data.CastTime,
-                                            DalamudApi.ObjectTable.SearchById(data.TargetID)?.Position.X, DalamudApi.ObjectTable.SearchById(data.TargetID)?.Position.Y, DalamudApi.ObjectTable.SearchById(data.TargetID)?.Position.Z,
-                                            DalamudApi.ObjectTable.SearchById(data.TargetID)?.Rotation);
+                                            soutceobj?.Position.X, soutceobj?.Position.Z, soutceobj?.Position.Y,
+                                            soutceobj?.Rotation);
             eventHandle.SetLog(LogMessageType.StartsCasting, $"{message}");
         }
 
@@ -293,8 +301,8 @@ namespace DDD
             var message = id switch
             {
                 ActorControlCategory.CancelCast => $"{format.FormatNetworkCancelMessage(entityId, entity.Name.TextValue, arg2, actions.GetRow(arg2)?.Name, arg1 == 1, arg1 != 1)}",
-                ActorControlCategory.Hot => $"{format.FormatNetworkDoTMessage(entityId, entity.Name.TextValue, true, arg0, arg1, entity?.CurrentHp, entity.MaxHp, entity.CurrentMp, entity.MaxHp, entity?.Position.X, entity?.Position.Y, entity?.Position.Z, entity?.Rotation)}",
-                ActorControlCategory.HoT_DoT => $"{format.FormatNetworkDoTMessage(entityId, entity.Name.TextValue, false, arg0, arg1, entity?.CurrentHp, entity?.MaxHp, entity?.CurrentMp, entity?.MaxHp, entity?.Position.X, entity?.Position.Y, entity?.Position.Z, entity?.Rotation)}",
+                ActorControlCategory.Hot => $"{format.FormatNetworkDoTMessage(entityId, entity.Name.TextValue, true, arg0, arg1, entity?.CurrentHp, entity.MaxHp, entity.CurrentMp, entity.MaxHp, entity?.Position.X, entity?.Position.Z, entity?.Position.Y, entity?.Rotation)}",
+                ActorControlCategory.HoT_DoT => $"{format.FormatNetworkDoTMessage(entityId, entity.Name.TextValue, false, arg0, arg1, entity?.CurrentHp, entity?.MaxHp, entity?.CurrentMp, entity?.MaxHp, entity?.Position.X, entity?.Position.Z, entity?.Position.Y, entity?.Rotation)}",
                 ActorControlCategory.Death => $"{format.FormatNetworkDeathMessage(entityId, entity.Name.TextValue, arg0, DalamudApi.ObjectTable.SearchById(arg0)?.Name.TextValue)}",
                 ActorControlCategory.TargetIcon => $"{format.FormatNetworkTargetIconMessage(entityId, entity.Name.TextValue, arg1, arg2, arg0, arg3, arg4, arg5)}",
                 ActorControlCategory.SetTargetSign => $"{format.FormatNetworkSignMessage(targetId == 0xE0000000 ? "Delete" : "Add", arg0, entityId, entity.Name.TextValue, targetId == 0xE0000000 ? null : (uint)targetId, target?.Name.TextValue ?? "")}",
@@ -311,7 +319,7 @@ namespace DDD
                 //$"TESTING::{id}:{entityId:X}:0={arg0:X}:1={arg1:X}:2={arg2}:3={arg3:X}:4={arg4}:5={arg5}:6={targetId:X}",
                 _ => ""
             };
-            //PluginLog.Warning($"{message}");
+            //PluginLog.Yarning($"{message}");
             if (type != LogMessageType.Debug) eventHandle.SetLog(type, $"{message}");
 
         }
@@ -321,58 +329,55 @@ namespace DDD
         {
 
             var targetCount = *(byte*)(effectHeader + 0x21);
+            var data = Marshal.PtrToStructure<Ability1>(effectHeader);
+            var effects = Marshal.PtrToStructure<EffectsEntry>(effectArray);
+            var targets = Marshal.PtrToStructure<TargetsEntry>(effectTrail);
+            ReceiveAbilityHook.Original(sourceId, sourceChara, pos, effectHeader, effectArray, effectTrail);
 
             if (targetCount <= 1)
             {
-                var data = Marshal.PtrToStructure<Ability1>(effectHeader);
-                ReceiveAbilityHook.Original(sourceId, sourceChara, pos, effectHeader, effectArray, effectTrail);
+                
                 var sourceCharacter = (Character?)DalamudApi.ObjectTable.SearchById(sourceId);
-                var targetobject = (Character?)DalamudApi.ObjectTable.SearchById((uint)data.targetId[0]);
+                var targetobject = (Character?)DalamudApi.ObjectTable.SearchById((uint)targets.entry[0]);
                 var message = format.FormatNetworkAbilityMessage(sourceId, sourceCharacter?.Name.TextValue ?? "",
                                                                  data.Header.actionId,
                                                                  actions.GetRow(data.Header.actionId)?.Name ?? "",
-                                                                 (uint)data.targetId[0], targetobject?.Name.TextValue ?? "",
+                                                                 (uint)targets.entry[0], targetobject?.Name.TextValue ?? "",
                                                                  sourceCharacter?.CurrentHp, sourceCharacter?.MaxHp,
                                                                  sourceCharacter?.CurrentMp, sourceCharacter?.MaxMp,
-                                                                 sourceCharacter?.Position.X, sourceCharacter?.Position.Y,
-                                                                 sourceCharacter?.Position.Z, sourceCharacter?.Rotation,
+                                                                 sourceCharacter?.Position.X, sourceCharacter?.Position.Z,
+                                                                 sourceCharacter?.Position.Y, sourceCharacter?.Rotation,
                                                                  targetobject?.CurrentHp, targetobject?.MaxHp,
                                                                  targetobject?.CurrentMp, targetobject?.MaxMp,
-                                                                 targetobject?.Position.X, targetobject?.Position.Y,
-                                                                 targetobject?.Position.Z, targetobject?.Rotation,
-                                                                 data.Effects[0], data.Effects[1], data.Effects[2],
-                                                                 data.Effects[3], data.Effects[4], data.Effects[5],
-                                                                 data.Effects[6], data.Effects[7], data.Header.rotation,
+                                                                 targetobject?.Position.X, targetobject?.Position.Z,
+                                                                 targetobject?.Position.Y, targetobject?.Rotation,
+                                                                 effects.entry[0], effects.entry[1], effects.entry[2],
+                                                                 effects.entry[3], effects.entry[4], effects.entry[5],
+                                                                 effects.entry[6], effects.entry[7], data.Header.globalSequence,
                                                                  0, targetCount);
                 eventHandle.SetLog(LogMessageType.ActionEffect, $"{message}");
             }
             else
             {
-                var header = Marshal.PtrToStructure<Header>(effectHeader);
-                var targets = new long[targetCount];
-                var effects = new long[8 * targetCount];
-                Marshal.Copy(effectArray, effects, 0, targetCount * 8);
-                Marshal.Copy(effectTrail, targets, 0, targetCount);
-                ReceiveAbilityHook.Original(sourceId, sourceChara, pos, effectHeader, effectArray, effectTrail);
                 var sourceCharacter = (Character?)DalamudApi.ObjectTable.SearchById(sourceId);
                 for (byte i = 0; i < targetCount; i++)
                 {
-                    var targetobject = (Character?)DalamudApi.ObjectTable.SearchById((uint)targets[i]);
+                    var targetobject = (Character?)DalamudApi.ObjectTable.SearchById((uint)targets.entry[i]);
                     var message = format.FormatNetworkAbilityMessage(sourceId, sourceCharacter?.Name.TextValue ?? "",
-                                                                     header.actionId,
-                                                                     actions.GetRow(header.actionId).Name ?? "",
-                                                                     (uint)targets[i], targetobject?.Name.TextValue ?? "",
+                                                                     data.Header.actionId,
+                                                                     actions.GetRow(data.Header.actionId).Name ?? "",
+                                                                     (uint)targets.entry[i], targetobject?.Name.TextValue ?? "",
                                                                      sourceCharacter?.CurrentHp, sourceCharacter?.MaxHp,
                                                                      sourceCharacter?.CurrentMp, sourceCharacter?.MaxMp,
-                                                                     sourceCharacter?.Position.X, sourceCharacter?.Position.Y,
-                                                                     sourceCharacter?.Position.Z, sourceCharacter?.Rotation,
+                                                                     sourceCharacter?.Position.X, sourceCharacter?.Position.Z,
+                                                                     sourceCharacter?.Position.Y, sourceCharacter?.Rotation,
                                                                      targetobject?.CurrentHp, targetobject?.MaxHp,
                                                                      targetobject?.CurrentMp, targetobject?.MaxMp,
-                                                                     targetobject?.Position.X, targetobject?.Position.Y,
-                                                                     targetobject?.Position.Z, targetobject?.Rotation,
-                                                                     (ulong)effects[i * 8 + 0], (ulong)effects[i * 8 + 1], (ulong)effects[i * 8 + 2],
-                                                                     (ulong)effects[i * 8 + 3], (ulong)effects[i * 8 + 4], (ulong)effects[i * 8 + 5],
-                                                                     (ulong)effects[i * 8 + 6], (ulong)effects[i * 8 + 7], header.rotation,
+                                                                     targetobject?.Position.X, targetobject?.Position.Z,
+                                                                     targetobject?.Position.Y, targetobject?.Rotation,
+                                                                     (ulong)effects.entry[i * 8 + 0], (ulong)effects.entry[i * 8 + 1], (ulong)effects.entry[i * 8 + 2],
+                                                                     (ulong)effects.entry[i * 8 + 3], (ulong)effects.entry[i * 8 + 4], (ulong)effects.entry[i * 8 + 5],
+                                                                     (ulong)effects.entry[i * 8 + 6], (ulong)effects.entry[i * 8 + 7], data.Header.globalSequence,
                                                                      i, targetCount);
                     eventHandle.SetLog(LogMessageType.AOEActionEffect, $"{message}");
 
@@ -383,8 +388,10 @@ namespace DDD
 
         private unsafe void ClientState_TerritoryChanged(object? sender, ushort e)
         {
+            CheckPlayer();
             var placeName = territory.GetRow(DalamudApi.ClientState.TerritoryType)?.PlaceName.Value?.Name;
             eventHandle.SetLog(LogMessageType.Territory, $"{format.FormatChangeZoneMessage(DalamudApi.ClientState.TerritoryType, placeName)}");
+            
             MapChange();
             //TODO MAP change
             //eventHandle.SetLog($"02|{format.FormatChangePrimaryPlayerMessage(DalamudApi.ClientState.LocalPlayer?.ObjectId,DalamudApi.ClientState.LocalPlayer?.Name.TextValue)}");
@@ -414,7 +421,7 @@ namespace DDD
             WayMarkHook.Original(ptr);
             var source = DalamudApi.ClientState.LocalPlayer;
             //TODO:Source修复
-            eventHandle.SetLog(LogMessageType.WaymarkMarker, $"{format.FormatNetworkWaymarkMessage(data.status == 0 ? "Delete" : "Add", (uint)data.markerId, source.ObjectId, source?.Name.TextValue, data.Xint / 1000f, data.Yint / 1000f, data.Zint / 1000f)}");
+            eventHandle.SetLog(LogMessageType.WaymarkMarker, $"{format.FormatNetworkWaymarkMessage(data.status == 0 ? "Delete" : "Add", (uint)data.markerId, source.ObjectId, source?.Name.TextValue, data.Xint / 1000f, data.Zint / 1000f, data.Yint / 1000f)}");
         }
 
         private unsafe void WayMarkPresent(IntPtr ptr)
@@ -425,7 +432,7 @@ namespace DDD
             //TODO:Source修复
             for (var i = 0; i < 8; i++)
             {
-                eventHandle.SetLog(LogMessageType.WaymarkMarker, $"{format.FormatNetworkWaymarkMessage(((uint)data.status & 1 << i) == 0 ? "Delete" : "Add", (uint)i, source.ObjectId, source?.Name.TextValue, data.Xints[i] / 1000f, data.Yints[i] / 1000f, data.Zints[i] / 1000f)}");
+                eventHandle.SetLog(LogMessageType.WaymarkMarker, $"{format.FormatNetworkWaymarkMessage(((uint)data.status & 1 << i) == 0 ? "Delete" : "Add", (uint)i, source.ObjectId, source?.Name.TextValue, data.Xints[i] / 1000f, data.Zints[i] / 1000f, data.Yints[i] / 1000f)}");
             }
 
         }
@@ -441,30 +448,32 @@ namespace DDD
 
         private void EffectResult(uint targetId, IntPtr ptr, byte a3)
         {
+            //PluginLog.Yarning($"EffectResult");
             var data = Marshal.PtrToStructure<FFXIVIpcEffectResult>(ptr);
             EffectResultHook.Original(targetId, ptr, a3);
             if (a3 != 0) return;
             var target = (Character?)DalamudApi.ObjectTable.SearchById(targetId);
-            for (var i = 0; i < data.entryCount; i++)
-            {
-                var sta = data.statusEntries[i];
-                var source = DalamudApi.ObjectTable.SearchById(sta.sourceActorId);
-                var maxhp = source is Character ? (uint?)((Character)source).MaxHp : null;
-                eventHandle.SetLog(LogMessageType.StatusAdd,format.FormatNetworkBuffMessage(sta.id, status.GetRow(sta.id)?.Name.RawString, sta.duration, sta.sourceActorId, source?.Name.TextValue, targetId, target?.Name.TextValue, sta.param, target?.MaxHp, maxhp));
-            }
+            //for (var i = 0; i < data.entryCount; i++)
+            //{
+            //    var sta = data.statusEntries[i];
+            //    var source = DalamudApi.ObjectTable.SearchById(sta.sourceActorId);
+            //    var maxhp = source is Character ? (uint?)((Character)source).MaxHp : null;
+            //    eventHandle.SetLog(LogMessageType.StatusAdd,format.FormatNetworkBuffMessage(sta.id, status.GetRow(sta.id)?.Name.RawString, sta.duration, sta.sourceActorId, source?.Name.TextValue, targetId, target?.Name.TextValue, sta.param, target?.MaxHp, maxhp));
+            //}
             uint[] array = new uint[20]
             {
                 (uint)(data.unknown1 + (data.classId << 8)), 0u, data.unknown2, data.entryCount, 0u, 0u, 0u, 0u, 0u, 0u,
                 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u
             };
-            for (int i = 0; i < (data.entryCount > 4 ? 4: data.entryCount); i++)
+            data.entryCount = data.entryCount > 4 ? (byte)4 : data.entryCount;
+            for (int i = 0; i < data.entryCount; i++)
             {
-                array[4 + i * 4] = (uint)(data.statusEntries[i].id + (data.statusEntries[i].unknown3 << 16) + (data.statusEntries[i].id << 24));
+                array[4 + i * 4] = (uint)(data.statusEntries[i].id + (data.statusEntries[i].unknown3 << 16) + (data.statusEntries[i].index << 24));
                 array[4 + i * 4 + 1] = (uint)(data.statusEntries[i].unknown4 + (data.statusEntries[i].param << 16));
                 array[4 + i * 4 + 2] = BitConverter.ToUInt32(BitConverter.GetBytes(data.statusEntries[i].duration), 0);
                 array[4 + i * 4 + 3] = data.statusEntries[i].sourceActorId;
             }
-            eventHandle.SetLog(LogMessageType.EffectResult, format.FormatEffectResultMessage(targetId,target?.Name.TextValue,data.globalSequence,data.current_hp,data.max_hp,data.current_mp,10000u,data.shieldPercentage,target?.Position.X,target?.Position.Y,target?.Position.Z,target?.Rotation,array));
+            eventHandle.SetLog(LogMessageType.EffectResult, format.FormatEffectResultMessage(targetId,target?.Name.TextValue,data.globalSequence,data.current_hp,data.max_hp,data.current_mp,10000u,data.shieldPercentage,target?.Position.X,target?.Position.Z,target?.Position.Y,target?.Rotation,array));
         }
 
         private void PlayerState()
@@ -493,7 +502,7 @@ namespace DDD
 
             var jobLevels = (uint)(effectList.JobID + (effectList.Level1 << 8) + (effectList.Level2 << 16) + (effectList.Level3 << 24));
             var combatantById = DalamudApi.ObjectTable.SearchById(sourceId);
-            var text = format.FormatStatusListMessage(sourceId, combatantById?.Name.TextValue, jobLevels, effectList.CurrentHP, effectList.MaxHP, effectList.CurrentMP, effectList.MaxMP, effectList.DamageShield, combatantById?.Position.X, combatantById?.Position.Y, combatantById?.Position.Z, combatantById?.Rotation, array);
+            var text = format.FormatStatusListMessage(sourceId, combatantById?.Name.TextValue, jobLevels, effectList.CurrentHP, effectList.MaxHP, effectList.CurrentMP, effectList.MaxMP, effectList.DamageShield, combatantById?.Position.X, combatantById?.Position.Z, combatantById?.Position.Y, combatantById?.Rotation, array);
             eventHandle.SetLog(LogMessageType.StatusList, text);
         }
 
@@ -516,6 +525,7 @@ namespace DDD
             WayMarkHook.Dispose();
             GaugeHook.Dispose();
             EffectResultHook.Dispose();
+            EffectResultBasicHook.Dispose();
             BuffList1Hook.Dispose();
             EnvControlHook.Dispose();
             DalamudApi.Framework.Update -= CompareObjects;

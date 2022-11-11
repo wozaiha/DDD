@@ -2,35 +2,38 @@ using System.Runtime.InteropServices;
 
 namespace DDD.Struct
 {
-    [StructLayout(LayoutKind.Explicit, Size = 0x2A)]
+    
     public struct Header
     {
-        [FieldOffset(0x0)] private ulong animationTargetId; // who the animation targets
+        public uint animationTargetId;
 
-        [FieldOffset(0x8)] public uint actionId; // what the casting player casts, shown in battle log/ui
-        [FieldOffset(0xC)] private uint globalSequence; // seems to only increment on retail?
+        public uint unknown;
 
-        [FieldOffset(0x10)] private float animationLockTime; // maybe? doesn't seem to do anything
+        public uint actionId;
 
-        [FieldOffset(0x14)]
-        private uint someTargetId; // always 00 00 00 E0, 0x0E000000 is the internal def for INVALID TARGET ID
+        public uint globalSequence;
 
-        [FieldOffset(0x18)]
-        private ushort sourceSequence; // if 0, always shows animation, otherwise hides it. counts up by 1 for each animation skipped on a caster
+        public float animationLockTime;
 
-        [FieldOffset(0x1A)] public ushort rotation;
-        [FieldOffset(0x1C)] private ushort actionAnimationId; // the animation that is played by the casting character
-        [FieldOffset(0x1E)] private byte variation; // variation in the animation
-        [FieldOffset(0x1F)] private byte effectDisplayType;
+        public uint SomeTargetID;
 
-        [FieldOffset(0x20)]
-        private byte unknown20; // is read by handler, runs code which gets the LODWORD of animationLockTime (wtf?)
+        public ushort hiddenAnimation;
 
-        [FieldOffset(0x21)] public byte effectCount; // ignores effects if 0, otherwise parses all of them
-        [FieldOffset(0x22)] private ushort padding0;
+        public ushort rotation;
 
-        [FieldOffset(0x24)] private uint padding1;
-        [FieldOffset(0x28)] private ushort padding2;
+        public ushort actionAnimationId;
+
+        public byte variation;
+
+        public byte effectDisplayType;
+
+        public byte unknown20;
+
+        public byte effectCount;
+
+        public ushort padding21;
+
+        
     }
 
     [StructLayout(LayoutKind.Explicit, Size = 0x8)]
@@ -57,6 +60,7 @@ namespace DDD.Struct
     {
         public Header Header;
         public fixed ulong Effects[1 * 8];
+        public Ender ender;
         public fixed ulong targetId[1];
     }
 
@@ -90,5 +94,15 @@ namespace DDD.Struct
         public fixed ulong enrty[32 * 8];
         public Ender ender;
         public fixed ulong targetId[32];
+    }
+
+    public unsafe struct EffectsEntry
+    {
+        public fixed ulong entry[32 * 8];
+    }
+
+    public unsafe struct TargetsEntry
+    {
+        public fixed ulong entry[32];
     }
 }
