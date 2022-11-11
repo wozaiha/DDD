@@ -12,7 +12,7 @@ public class LogFormat : ILogFormat
 
     public string FormatVersion()
     {
-        return ((FormattableString)$"This is IINACT based on FFXIV_ACT_Plugin {typeof(LogOutput).Assembly.GetName().Version}").ToString(CultureInfo.InvariantCulture);
+        return ((FormattableString)$"FFXIV_ACT_Plugin Version: 2.6.6.1 (0000000000000000)").ToString(CultureInfo.InvariantCulture);
     }
 
     public string FormatProcess(string clientMode, int? processId, bool isAdministrator, string gameVersion)

@@ -21,6 +21,7 @@ using DDD.Windows;
 using Action = Lumina.Excel.GeneratedSheets.Action;
 using DDD.Struct;
 using DDD.Plugins;
+using System.Globalization;
 
 namespace DDD
 {
@@ -174,7 +175,9 @@ namespace DDD
             DalamudApi.ClientState.TerritoryChanged += ClientState_TerritoryChanged;
             DalamudApi.Framework.Update += PartyChanged;
             DalamudApi.Framework.Update += CompareObjects;
-
+            ClientState_TerritoryChanged(null,0);
+            //eventHandle.NewFile();
+            
             //DalamudApi.GameNetwork.NetworkMessage += GameNetworkOnNetworkMessage;
         }
 
@@ -225,15 +228,16 @@ namespace DDD
                         break;
                 }
             }
-
             objects = newlist;
-            PlayerState();
+            
         }
 
         private void PartyChanged(Dalamud.Game.Framework framework)
         {
+            
+            if (DalamudApi.ClientState.LocalPlayer == null) return;
+            CheckPlayer();
             MapChange();
-            if (DalamudApi.ClientState.LocalPlayer != null) CheckPlayer();
             if (partyLength == DalamudApi.PartyList.Length) return;
             partyLength = DalamudApi.PartyList.Length;
             var lists = new List<uint>();
@@ -390,10 +394,9 @@ namespace DDD
         private unsafe void MapChange()
         {
             var MapId = *(uint*)MapIdDungeon == 0 ? *(uint*)MapIdWorld : *(uint*)MapIdDungeon;
-            if (oldMap != MapId) return;
+            if (oldMap == MapId) return;
             oldMap = MapId;
             var map = maps.GetRow(MapId);
-            //TODO MAP change
             eventHandle.SetLog(LogMessageType.ChangeMap, $"{format.FormatChangeMapMessage(MapId, map?.PlaceNameRegion.Value?.Name, map?.PlaceName.Value?.Name, map?.PlaceNameSub.Value?.Name)}");
         }
 
@@ -402,6 +405,7 @@ namespace DDD
             if (DalamudApi.ClientState.LocalPlayer is null || plID == DalamudApi.ClientState.LocalPlayer.ObjectId) return;
             plID = DalamudApi.ClientState.LocalPlayer.ObjectId;
             eventHandle.SetLog(LogMessageType.ChangePrimaryPlayer, $"{format.FormatChangePrimaryPlayerMessage(plID, DalamudApi.ClientState.LocalPlayer.Name.TextValue)}");
+            PlayerState();
         }
 
         private void WayMark(IntPtr ptr)
@@ -515,6 +519,7 @@ namespace DDD
             BuffList1Hook.Dispose();
             EnvControlHook.Dispose();
             DalamudApi.Framework.Update -= CompareObjects;
+            eventHandle.CloseFile();
             //new IPC().Unsub();
 
             //DalamudApi.GameNetwork.NetworkMessage -= GameNetworkOnNetworkMessage;
