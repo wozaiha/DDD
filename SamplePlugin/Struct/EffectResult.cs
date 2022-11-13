@@ -28,7 +28,7 @@ namespace DDD.Struct
         public StatusEntry[] Effects;
 
     };
-    struct StatusEntry
+    public struct StatusEntry
     {
         public byte EffectIndex;
 

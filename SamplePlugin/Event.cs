@@ -66,8 +66,8 @@ namespace DDD
 
          public void CloseFile()
         {
-            sw.Close();
-            logFileStream.Close();
+            sw?.Close();
+            logFileStream?.Close();
         }
     }
 

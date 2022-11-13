@@ -1,4 +1,8 @@
+using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Runtime.InteropServices;
+using System.Text;
+using Lumina.Excel.GeneratedSheets;
 
 namespace DDD.Struct
 {
@@ -28,10 +32,63 @@ namespace DDD.Struct
         [FieldOffset(3)]
         public byte Param;
         [FieldOffset(4)]
-        public uint RemainingTime;
+        public float RemainingTime;
         [FieldOffset(8)]
         public uint SourceID;
+
+        public override bool Equals(object? obj)
+        {
+            if (obj is null or not NetStatus) return false;
+            var tem = (NetStatus)obj;
+            if (StatusID != tem.StatusID) return false;
+            if (StackCount != tem.StackCount) return false;
+            if (Param != tem.Param) return false;
+            //if (RemainingTime >= tem.RemainingTime) return false;
+            if (!SourceID.Equals(tem.SourceID)) return false;
+            return true;
+        }
+
+        public override int GetHashCode()
+        {
+            return 0;
+        }
+
+        public NetStatus(StatusEntry entry)
+        {
+            SourceID = entry.SourceActorID;
+            Param = (byte)(entry.param >> 8);
+            RemainingTime = entry.duration <0 ? -entry.duration : entry.duration;
+            StackCount = (byte)(entry.param & 0xF);
+            StatusID = entry.EffectID;
+
+        }
+
+
     }
+    //class NetStatusComparer : IEqualityComparer<NetStatus>
+    //{
+    //    public bool Equals(NetStatus x, NetStatus y)
+    //    {
+
+    //        if (x.StatusID != y.StatusID) return false;
+    //        if (x.StackCount != y.StackCount) return false;
+    //        if (x.Param != y.Param) return false;
+    //        if (x.RemainingTime >= y.RemainingTime) return false;
+    //        if (!x.SourceID.Equals(y.SourceID)) return false;
+    //        return true;
+    //    }
+
+    //    // If Equals() returns true for a pair of objects
+    //    // then GetHashCode() must return the same value for these objects.
+
+    //    public int GetHashCode(NetStatus product)
+    //    {
+    //        return 0;
+    //    }
+    //}
+
+
+
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public unsafe struct StatusEffectList
@@ -44,10 +101,10 @@ namespace DDD.Struct
         public uint MaxHP;
         public ushort CurrentMP;
         public ushort MaxMP;
-        public ushort Unknown1; // used to be TP
         public byte DamageShield;
+        public ushort Unknown1; // used to be TP
         public byte Unknown2;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 30)]
         public NetStatus[] Effects;
     }
-};
+}
