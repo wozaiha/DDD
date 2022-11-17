@@ -198,7 +198,7 @@ namespace DDD
         private void CompareObjects()
         {
             var now = DateTimeOffset.Now.ToUnixTimeMilliseconds();
-            if (now - lastTime < 100) return;
+            //if (now - lastTime < 10) return;
             lastTime = now;
             var newlist = new List<GameObject>();
             foreach (var obj in DalamudApi.ObjectTable)
@@ -207,8 +207,8 @@ namespace DDD
                 newlist.Add(obj);
             }
 
-            var plus = newlist.Except(objects);
-            var minus = objects.Except(newlist);
+            var plus = newlist.Except(objects).ToList();
+            var minus = objects.Except(newlist).ToList();
             var time = DateTime.Now;
             foreach (var obj in plus)
             {
@@ -242,8 +242,8 @@ namespace DDD
 
         private void PartyChanged(Dalamud.Game.Framework framework)
         {
-            MapChange();
             if (DalamudApi.ClientState.LocalPlayer == null) return;
+            MapChange();
             CheckPlayer();
             CompareObjects();
             if (partyLength == DalamudApi.PartyList.Length) return;
