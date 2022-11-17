@@ -32,6 +32,7 @@ public class LogFormat : ILogFormat
 
     public string FormatCombatantMessage(uint CombatantID, uint OwnerID, string CombatantName, int JobID, int Level, uint WorldID, string WorldName, uint BNpcNameID, uint BNpcID, uint currentHp, uint maxHp, uint currentMp, uint maxMp, float PosX, float PosY, float PosZ, float Heading)
     {
+        OwnerID = OwnerID == 0xE0000000 ? 0 : OwnerID;
         return ((FormattableString)$"{CombatantID:X4}|{CombatantName}|{JobID:X2}|{Level:X1}|{OwnerID:X4}|{WorldID:X2}|{WorldName}|{BNpcNameID}|{BNpcID}|").ToString(CultureInfo.InvariantCulture) + FormatCombatantProperties(currentHp, maxHp, currentMp, maxMp, null, PosX, PosY, PosZ, Heading);
     }
 

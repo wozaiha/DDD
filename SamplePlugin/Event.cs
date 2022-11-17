@@ -28,7 +28,7 @@ namespace DDD
             OnNewLog?.Invoke(this, log);
         }
 
-        public void SetLog(LogMessageType type, string text)
+        public void SetLog(LogMessageType type, string text, DateTime time)
         {
             if (!File.Exists(logFileName)) NewFile();
             if (type is LogMessageType.Version or LogMessageType.Territory) logIndex = 0;
@@ -37,7 +37,7 @@ namespace DDD
             var array = new string[5];
             array[0] = num.ToString(CultureInfo.InvariantCulture).PadLeft(2, '0');
             array[1] = "|";
-            array[2] = DateTime.Now.ToString("O");
+            array[2] = time.ToString("O");
             array[3] = "|";
             array[4] = text.Replace('\0', ' ');
             text = string.Concat(array);
@@ -60,7 +60,7 @@ namespace DDD
 
              logFileStream = File.Open(logFileName, FileMode.Append,FileAccess.Write,FileShare.Read);
              sw = new StreamWriter(logFileStream, Encoding.UTF8);
-             if (!exist) SetLog(LogMessageType.Version, ((FormattableString)$"FFXIV_ACT_Plugin Version: 2.6.6.1 (50BCD605C50A749F)").ToString(CultureInfo.InvariantCulture));
+             if (!exist) SetLog(LogMessageType.Version, ((FormattableString)$"FFXIV_ACT_Plugin Version: 2.6.6.1 (50BCD605C50A749F)").ToString(CultureInfo.InvariantCulture),DateTime.Now);
 
          }
 

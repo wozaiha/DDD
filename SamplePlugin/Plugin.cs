@@ -129,11 +129,11 @@ namespace DDD
             CastHook.Enable();
 
             WayMarkHook = Hook<WayMarkDelegate>.FromAddress(
-                DalamudApi.SigScanner.ScanText("E8 ?? ?? ?? ?? B0 01 48 8B 5C 24 ?? 48 8B 74 24 ?? 48 83 C4 50 5F C3 8B 57 08"), WayMark);
+                DalamudApi.SigScanner.ScanText("48 8B D1 48 8D 0D ?? ?? ?? ?? E9 ?? ?? ?? ?? CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC 40 55 56"), WayMark);
             WayMarkHook.Enable();
             WayMarkPresentHook = Hook<WayMarkPresentDelegate>.FromAddress(
-                DalamudApi.SigScanner.ScanText("48 8B D1 48 8D 0D ?? ?? ?? ?? E9 ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? 48 8B D1 48 8D 0D ?? ?? ?? ?? E9 ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? 40 55"), WayMarkPresent);
-            WayMarkPresentHook.Enable();
+                DalamudApi.SigScanner.ScanText("E8 ?? ?? ?? ?? 84 C0 74 60 33 C0"), WayMarkPresent);
+            //WayMarkPresentHook.Enable();
 
             GaugeHook = Hook<GaugeDelegate>.FromAddress(
                 DalamudApi.SigScanner.ScanText("E8 ?? ?? ?? ?? 80 BE ?? ?? ?? ?? ?? 0F 83 ?? ?? ?? ??"), Gauge);
@@ -185,7 +185,6 @@ namespace DDD
 
             //DalamudApi.ClientState.TerritoryChanged += ClientState_TerritoryChanged;
             DalamudApi.Framework.Update += PartyChanged;
-            DalamudApi.Framework.Update += CompareObjects;
 
             //DalamudApi.GameNetwork.NetworkMessage += GameNetworkOnNetworkMessage;
         }
@@ -196,7 +195,7 @@ namespace DDD
             PluginLog.Warning($"GOT OPCode:{opcode:X}:");
         }
 
-        private void CompareObjects(Dalamud.Game.Framework framework)
+        private void CompareObjects()
         {
             var now = DateTimeOffset.Now.ToUnixTimeMilliseconds();
             if (now - lastTime < 100) return;
@@ -210,16 +209,17 @@ namespace DDD
 
             var plus = newlist.Except(objects);
             var minus = objects.Except(newlist);
+            var time = DateTime.Now;
             foreach (var obj in plus)
             {
                 switch (obj.ObjectKind)
                 {
                     case ObjectKind.Player:
-                        eventHandle.SetLog(LogMessageType.AddCombatant, $"{format.FormatCombatantMessage(obj.ObjectId, obj.OwnerId, obj.Name.TextValue, (int)((PlayerCharacter)obj).ClassJob.Id, ((Character)obj).Level, ((PlayerCharacter)obj).HomeWorld.Id, worlds.GetRow(((PlayerCharacter)obj).HomeWorld.Id).InternalName.RawString, 0, 0, ((Character)obj).CurrentHp, ((Character)obj).MaxHp, ((Character)obj).CurrentMp, ((Character)obj).MaxMp, obj.Position.X, obj.Position.Z, obj.Position.Y, obj.Rotation)}");
+                        eventHandle.SetLog(LogMessageType.AddCombatant, $"{format.FormatCombatantMessage(obj.ObjectId, obj.OwnerId, obj.Name.TextValue, (int)((PlayerCharacter)obj).ClassJob.Id, ((Character)obj).Level, ((PlayerCharacter)obj).HomeWorld.Id, worlds.GetRow(((PlayerCharacter)obj).HomeWorld.Id).InternalName.RawString, 0, 0, ((Character)obj).CurrentHp, ((Character)obj).MaxHp, ((Character)obj).CurrentMp, ((Character)obj).MaxMp, obj.Position.X, obj.Position.Z, obj.Position.Y, obj.Rotation)}",time);
 
                         break;
                     case ObjectKind.BattleNpc:
-                        eventHandle.SetLog(LogMessageType.AddCombatant, $"{format.FormatCombatantMessage(obj.ObjectId, obj.OwnerId, obj.Name.TextValue, 0, ((BattleNpc)obj).Level, 0, "", ((BattleNpc)obj).NameId, ((BattleNpc)obj).DataId, ((BattleNpc)obj).CurrentHp, ((BattleNpc)obj).MaxHp, ((BattleNpc)obj).CurrentMp, ((BattleNpc)obj).MaxMp, obj.Position.X, obj.Position.Z, obj.Position.Y, obj.Rotation)}");
+                        eventHandle.SetLog(LogMessageType.AddCombatant, $"{format.FormatCombatantMessage(obj.ObjectId, obj.OwnerId, obj.Name.TextValue, 0, ((BattleNpc)obj).Level, 0, "", ((BattleNpc)obj).NameId, ((BattleNpc)obj).DataId, ((BattleNpc)obj).CurrentHp, ((BattleNpc)obj).MaxHp, ((BattleNpc)obj).CurrentMp, ((BattleNpc)obj).MaxMp, obj.Position.X, obj.Position.Z, obj.Position.Y, obj.Rotation)}", time);
                         break;
                 }
             }
@@ -228,10 +228,10 @@ namespace DDD
                 switch (obj.ObjectKind)
                 {
                     case ObjectKind.Player:
-                        eventHandle.SetLog(LogMessageType.RemoveCombatant, $"{format.FormatCombatantMessage(obj.ObjectId, obj.OwnerId, obj.Name.TextValue, (int)((PlayerCharacter)obj).ClassJob.Id, ((Character)obj).Level, ((PlayerCharacter)obj).HomeWorld.Id, worlds.GetRow(((PlayerCharacter)obj).HomeWorld.Id).InternalName.RawString, 0, 0, ((Character)obj).CurrentHp, ((Character)obj).MaxHp, ((Character)obj).CurrentMp, ((Character)obj).MaxMp, obj.Position.X, obj.Position.Z, obj.Position.Y, obj.Rotation)}");
+                        eventHandle.SetLog(LogMessageType.RemoveCombatant, $"{format.FormatCombatantMessage(obj.ObjectId, obj.OwnerId, obj.Name.TextValue, (int)((PlayerCharacter)obj).ClassJob.Id, ((Character)obj).Level, ((PlayerCharacter)obj).HomeWorld.Id, worlds.GetRow(((PlayerCharacter)obj).HomeWorld.Id).InternalName.RawString, 0, 0, ((Character)obj).CurrentHp, ((Character)obj).MaxHp, ((Character)obj).CurrentMp, ((Character)obj).MaxMp, obj.Position.X, obj.Position.Z, obj.Position.Y, obj.Rotation)}", time);
                         break;
                     case ObjectKind.BattleNpc:
-                        eventHandle.SetLog(LogMessageType.RemoveCombatant, $"{format.FormatCombatantMessage(obj.ObjectId, obj.OwnerId, obj.Name.TextValue, 0, ((BattleNpc)obj).Level, 0, "", ((BattleNpc)obj).NameId, ((BattleNpc)obj).DataId, ((BattleNpc)obj).CurrentHp, ((BattleNpc)obj).MaxHp, ((BattleNpc)obj).CurrentMp, ((BattleNpc)obj).MaxMp, obj.Position.X, obj.Position.Z, obj.Position.Y, obj.Rotation)}");
+                        eventHandle.SetLog(LogMessageType.RemoveCombatant, $"{format.FormatCombatantMessage(obj.ObjectId, obj.OwnerId, obj.Name.TextValue, 0, ((BattleNpc)obj).Level, 0, "", ((BattleNpc)obj).NameId, ((BattleNpc)obj).DataId, ((BattleNpc)obj).CurrentHp, ((BattleNpc)obj).MaxHp, ((BattleNpc)obj).CurrentMp, ((BattleNpc)obj).MaxMp, obj.Position.X, obj.Position.Z, obj.Position.Y, obj.Rotation)}", time);
                         break;
                 }
                 manager.RemoveAll(obj.ObjectId);
@@ -242,10 +242,10 @@ namespace DDD
 
         private void PartyChanged(Dalamud.Game.Framework framework)
         {
-            
+            MapChange();
             if (DalamudApi.ClientState.LocalPlayer == null) return;
             CheckPlayer();
-            MapChange();
+            CompareObjects();
             if (partyLength == DalamudApi.PartyList.Length) return;
             partyLength = DalamudApi.PartyList.Length;
             var lists = new List<uint>();
@@ -254,7 +254,7 @@ namespace DDD
                 lists.Add(member.ObjectId);
             }
 
-            eventHandle.SetLog(LogMessageType.PartyList, $"{format.FormatPartyMessage(partyLength, new ReadOnlyCollection<uint>(lists))}");
+            eventHandle.SetLog(LogMessageType.PartyList, $"{format.FormatPartyMessage(partyLength, new ReadOnlyCollection<uint>(lists))}",DateTime.Now);
         }
 
         private void StartCast(uint source, IntPtr ptr)
@@ -267,7 +267,7 @@ namespace DDD
                                             data.ActionID, actions.GetRow(data.ActionID).Name, data.CastTime,
                                             soutceobj?.Position.X, soutceobj?.Position.Z, soutceobj?.Position.Y,
                                             soutceobj?.Rotation);
-            eventHandle.SetLog(LogMessageType.StartsCasting, $"{message}");
+            eventHandle.SetLog(LogMessageType.StartsCasting, $"{message}",DateTime.Now);
         }
 
         private void ReceiveActorControl(uint entityId, ActorControlCategory id, uint arg0, uint arg1, uint arg2,
@@ -301,10 +301,11 @@ namespace DDD
                 //ActorControlCategory.HoT_DoT => $"TESTING::{id}:{entityId:X}:0={arg0:X}:1={arg1:X}:2={arg2}:3={arg3:X}:4={arg4}:5={arg5}:6={targetId:X}",
                 _ => (LogMessageType.Debug, "")
             };
-            //PluginLog.Yarning($"{message}");
-            if (type != LogMessageType.Debug) eventHandle.SetLog(type, $"{message}");
-            if (id == ActorControlCategory.LoseEffect) manager.RemoveStatus(entityId,new NetStatus(){Param = (byte)(arg1>>8),RemainingTime = 0f,SourceID = arg2,StackCount =(byte)(arg1&0xF),StatusID = (ushort)arg0});
-            if (id == ActorControlCategory.UpdateEffect) manager.RefreshStatus(entityId, new NetStatus() { Param = (byte)(arg1 >> 8), RemainingTime = 0f, SourceID = arg2, StackCount = (byte)(arg1 & 0xF), StatusID = (ushort)arg0 });
+            var time = DateTime.Now;
+            if (type != LogMessageType.Debug) eventHandle.SetLog(type, $"{message}",time);
+            if (id == ActorControlCategory.LoseEffect) manager.RemoveStatus(entityId,new NetStatus(){Param = (byte)(arg1>>8),RemainingTime = 0f,SourceID = arg2,StackCount =(byte)(arg1&0xF),StatusID = (ushort)arg0}, time);
+            if (id == ActorControlCategory.UpdateEffect) manager.RefreshStatus(entityId, new NetStatus() { Param = (byte)(arg1 >> 8), RemainingTime = 0f, SourceID = arg2, StackCount = (byte)(arg1 & 0xF), StatusID = (ushort)arg0 }, time);
+            if (type == LogMessageType.DoTHoT) manager.OutputStatusList(entityId,time);
         }
 
         private unsafe void ReceiveAbilityEffect(uint sourceId, IntPtr sourceChara, IntPtr pos,
@@ -316,7 +317,7 @@ namespace DDD
             var effects = Marshal.PtrToStructure<EffectsEntry>(effectArray);
             var targets = Marshal.PtrToStructure<TargetsEntry>(effectTrail);
             ReceiveAbilityHook.Original(sourceId, sourceChara, pos, effectHeader, effectArray, effectTrail);
-
+            var time = DateTime.Now;
             if (targetCount <= 1)
             {
                 
@@ -338,7 +339,7 @@ namespace DDD
                                                                  effects.entry[3], effects.entry[4], effects.entry[5],
                                                                  effects.entry[6], effects.entry[7], data.Header.globalSequence,
                                                                  0, targetCount);
-                eventHandle.SetLog(LogMessageType.ActionEffect, $"{message}");
+                eventHandle.SetLog(LogMessageType.ActionEffect, $"{message}",time);
             }
             else
             {
@@ -362,7 +363,7 @@ namespace DDD
                                                                      (ulong)effects.entry[i * 8 + 3], (ulong)effects.entry[i * 8 + 4], (ulong)effects.entry[i * 8 + 5],
                                                                      (ulong)effects.entry[i * 8 + 6], (ulong)effects.entry[i * 8 + 7], data.Header.globalSequence,
                                                                      i, targetCount);
-                    eventHandle.SetLog(LogMessageType.AOEActionEffect, $"{message}");
+                    eventHandle.SetLog(LogMessageType.AOEActionEffect, $"{message}",time);
 
                 }
             }
@@ -372,8 +373,11 @@ namespace DDD
         private unsafe void ClientState_TerritoryChanged(object? sender, ushort e)
         {
             CheckPlayer();
-            var placeName = territory.GetRow(DalamudApi.ClientState.TerritoryType)?.PlaceName.Value?.Name;
-            eventHandle.SetLog(LogMessageType.Territory, $"{format.FormatChangeZoneMessage(DalamudApi.ClientState.TerritoryType, placeName)}");
+            var placeName = territory.GetRow(DalamudApi.ClientState.TerritoryType)?.PlaceName.Value?.Name.RawString;
+            if (!string.IsNullOrEmpty(territory.GetRow(DalamudApi.ClientState.TerritoryType)?.ContentFinderCondition.Value?.Name.RawString))
+                placeName = territory.GetRow(DalamudApi.ClientState.TerritoryType)?.ContentFinderCondition.Value?.Name
+                                     .RawString;
+            eventHandle.SetLog(LogMessageType.Territory, $"{format.FormatChangeZoneMessage(DalamudApi.ClientState.TerritoryType, placeName)}",DateTime.Now);
             
             //MapChange();
         }
@@ -385,14 +389,14 @@ namespace DDD
             oldMap = MapId;
             var map = maps.GetRow(MapId);
             ClientState_TerritoryChanged(null,0);
-            eventHandle.SetLog(LogMessageType.ChangeMap, $"{format.FormatChangeMapMessage(MapId, map?.PlaceNameRegion.Value?.Name, map?.PlaceName.Value?.Name, map?.PlaceNameSub.Value?.Name)}");
+            eventHandle.SetLog(LogMessageType.ChangeMap, $"{format.FormatChangeMapMessage(MapId, map?.PlaceNameRegion.Value?.Name, map?.PlaceName.Value?.Name, map?.PlaceNameSub.Value?.Name)}",DateTime.Now);
         }
 
         private void CheckPlayer()
         {
             if (DalamudApi.ClientState.LocalPlayer is null || plID == DalamudApi.ClientState.LocalPlayer.ObjectId) return;
             plID = DalamudApi.ClientState.LocalPlayer.ObjectId;
-            eventHandle.SetLog(LogMessageType.ChangePrimaryPlayer, $"{format.FormatChangePrimaryPlayerMessage(plID, DalamudApi.ClientState.LocalPlayer.Name.TextValue)}");
+            eventHandle.SetLog(LogMessageType.ChangePrimaryPlayer, $"{format.FormatChangePrimaryPlayerMessage(plID, DalamudApi.ClientState.LocalPlayer.Name.TextValue)}",DateTime.Now);
             PlayerState();
         }
 
@@ -402,18 +406,19 @@ namespace DDD
             WayMarkHook.Original(ptr);
             var source = DalamudApi.ClientState.LocalPlayer;
             //TODO:Source修复
-            eventHandle.SetLog(LogMessageType.WaymarkMarker, $"{format.FormatNetworkWaymarkMessage(data.status == 0 ? "Delete" : "Add", (uint)data.markerId, source.ObjectId, source?.Name.TextValue, data.Xint / 1000f, data.Zint / 1000f, data.Yint / 1000f)}");
+            eventHandle.SetLog(LogMessageType.WaymarkMarker, $"{format.FormatNetworkWaymarkMessage(data.status == 0 ? "Delete" : "Add", (uint)data.markerId, source.ObjectId, source?.Name.TextValue, data.Xint / 1000f, data.Zint / 1000f, data.Yint / 1000f)}",DateTime.Now);
         }
 
         private unsafe void WayMarkPresent(IntPtr ptr)
         {
             var data = Marshal.PtrToStructure<FFXIVIpcPlaceFieldMarkerPreset>(ptr);
             WayMarkPresentHook.Original(ptr);
+            var time = DateTime.Now;
             var source = DalamudApi.ClientState.LocalPlayer;
             //TODO:Source修复
             for (var i = 0; i < 8; i++)
             {
-                eventHandle.SetLog(LogMessageType.WaymarkMarker, $"{format.FormatNetworkWaymarkMessage(((uint)data.status & 1 << i) == 0 ? "Delete" : "Add", (uint)i, source.ObjectId, source?.Name.TextValue, data.Xints[i] / 1000f, data.Zints[i] / 1000f, data.Yints[i] / 1000f)}");
+                eventHandle.SetLog(LogMessageType.WaymarkMarker, $"{format.FormatNetworkWaymarkMessage(((uint)data.status & 1 << i) == 0 ? "Delete" : "Add", (uint)i, 0xE0000000, "", data.Xints[i] / 1000f, data.Zints[i] / 1000f, data.Yints[i] / 1000f)}",time);
             }
 
         }
@@ -422,7 +427,7 @@ namespace DDD
         {
             var data = Marshal.PtrToStructure<FFXIVIpcActorGauge>(ptr2);
             GaugeHook.Original(ptr1, ptr2);
-            eventHandle.SetLog(LogMessageType.Gauge, $"31|0|{DalamudApi.ClientState.LocalPlayer?.Name}|{data.Data0:X}|{data.Data1:X}|{data.Data2:X}");
+            eventHandle.SetLog(LogMessageType.Gauge, $"31|0|{DalamudApi.ClientState.LocalPlayer?.Name}|{data.Data0:X}|{data.Data1:X}|{data.Data2:X}",DateTime.Now);
             //TODO:ID不应为0
 
         }
@@ -441,19 +446,20 @@ namespace DDD
             };
             var ptr2 = data.Effects;
             //PluginLog.Warning($"{data.EffectCount}");
+            var time = DateTime.Now;
             for (int i = 0; i < data.EffectCount; i++)
             {
                 if (i > 3) continue;
                 var sta = data.Effects[i];
                 if (sta.EffectID == 0) continue;
-                manager.AddStatus(targetId, new NetStatus(sta));
+                manager.AddStatus(targetId, new NetStatus(sta),time);
                 array[4 + i * 4] = (uint)(ptr2[i].EffectID + (ptr2[i].unknown1 << 16) + (ptr2[i].EffectIndex << 24));
                 array[4 + i * 4 + 1] = (uint)(ptr2[i].param + (ptr2[i].unknown3 << 16));
                 array[4 + i * 4 + 2] = BitConverter.ToUInt32(BitConverter.GetBytes(ptr2[i].duration), 0);
                 array[4 + i * 4 + 3] = ptr2[i].SourceActorID;
             }
             
-            eventHandle.SetLog(LogMessageType.EffectResult, format.FormatEffectResultMessage(targetId,target?.Name.TextValue,data.RelatedActionSequence,data.CurrentHP,data.MaxHP,data.CurrentMP, data.Unknown3, data.DamageShield,target?.Position.X,target?.Position.Z,target?.Position.Y,target?.Rotation,array));
+            eventHandle.SetLog(LogMessageType.EffectResult, format.FormatEffectResultMessage(targetId,target?.Name.TextValue,data.RelatedActionSequence,data.CurrentHP,data.MaxHP,data.CurrentMP, 10000u, data.DamageShield,target?.Position.X,target?.Position.Z,target?.Position.Y,target?.Rotation,array),time);
             
 
 
@@ -469,7 +475,7 @@ namespace DDD
             uint[] array = Array.Empty<uint>();
             var ptr2 = data.Effects;
 
-            eventHandle.SetLog(LogMessageType.EffectResult, format.FormatEffectResultMessage(targetId, target?.Name.TextValue, data.RelatedActionSequence, data.CurrentHP, null,null,null, null, target?.Position.X, target?.Position.Z, target?.Position.Y, target?.Rotation, array));
+            eventHandle.SetLog(LogMessageType.EffectResult, format.FormatEffectResultMessage(targetId, target?.Name.TextValue, data.RelatedActionSequence, data.CurrentHP, null,null,null, null, target?.Position.X, target?.Position.Z, target?.Position.Y, target?.Rotation, array),DateTime.Now);
         }
 
         private void PlayerState()
@@ -478,7 +484,7 @@ namespace DDD
             var player = Marshal.PtrToStructure<PlayerStruct64>(PlayerStat);
             if (playerstat.Equals(player)) return;
             playerstat = player;
-            eventHandle.SetLog(LogMessageType.PlayerStats, $"{format.FormatPlayerStatsMessage(player.LocalContentId, player.Job, player.Str, player.Dex, player.Vit, player.Int, player.Mnd, player.Pie, player.Attack, player.DirectHit, player.Crit, player.AttackMagicPotency, player.HealMagicPotency, player.Det, player.SkillSpeed, player.SpellSpeed, player.Tenacity)}");
+            eventHandle.SetLog(LogMessageType.PlayerStats, $"{format.FormatPlayerStatsMessage(player.LocalContentId, player.Job, player.Str, player.Dex, player.Vit, player.Int, player.Mnd, player.Pie, player.Attack, player.DirectHit, player.Crit, player.AttackMagicPotency, player.HealMagicPotency, player.Det, player.SkillSpeed, player.SpellSpeed, player.Tenacity)}",DateTime.Now);
         }
 
         private void BuffList1Do(uint targetId, IntPtr b, byte c)
@@ -500,21 +506,21 @@ namespace DDD
                                                           ? -effectList.Effects[i].RemainingTime
                                                           : effectList.Effects[i].RemainingTime;
                 netStatusList.Add(effectList.Effects[i]);
-                PluginLog.Log(effectList.Effects[i].RemainingTime.ToString());
+                //PluginLog.Log(effectList.Effects[i].RemainingTime.ToString());
             }
-            manager.UpdateStatusList(targetId,netStatusList);
+            manager.UpdateStatusList(targetId,netStatusList,DateTime.Now);
 
             var jobLevels = (uint)(effectList.JobID + (effectList.Level1 << 8) + (effectList.Level2 << 16) + (effectList.Level3 << 24));
             var combatantById = DalamudApi.ObjectTable.SearchById(targetId);
             var text = format.FormatStatusListMessage(targetId, combatantById?.Name.TextValue, jobLevels, effectList.CurrentHP, effectList.MaxHP, effectList.CurrentMP, effectList.MaxMP, effectList.DamageShield, combatantById?.Position.X, combatantById?.Position.Z, combatantById?.Position.Y, combatantById?.Rotation, array);
-            eventHandle.SetLog(LogMessageType.StatusList, text);
+            eventHandle.SetLog(LogMessageType.StatusList, text,DateTime.Now);
         }
 
         unsafe void EnvControlFunc(long a1, IntPtr a2)
         {
             var data = Marshal.PtrToStructure<Server_EnvironmentControl>(a2);
             EnvControlHook.Original(a1, a2);
-            eventHandle.SetLog(LogMessageType.EnvironmentControl, $"{data.FeatureID:X}|{data.State:X}|{data.Index:X}|{data.u0:X}|{data.u1:X}|{data.u2:X}");
+            eventHandle.SetLog(LogMessageType.EnvironmentControl, $"{data.FeatureID:X}|{data.State:X}|{data.Index:X}|{data.u0:X}|{data.u1:X}|{data.u2:X}",DateTime.Now);
         }
 
 
@@ -531,12 +537,12 @@ namespace DDD
             ReceiveAbilityHook.Dispose();
             CastHook.Dispose();
             WayMarkHook.Dispose();
+            WayMarkPresentHook.Dispose();
             GaugeHook.Dispose();
             EffectResultHook.Dispose();
             EffectResultBasicHook.Dispose();
             BuffList1Hook.Dispose();
             EnvControlHook.Dispose();
-            DalamudApi.Framework.Update -= CompareObjects;
             eventHandle.CloseFile();
             //new IPC().Unsub();
 
