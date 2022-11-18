@@ -1,11 +1,17 @@
 # DDD Plugin
 
 输出ACT日志行,但是based on Dalamud.
-Log地址:pluginConfigs\DDD
 
-##已知问题:
+Log位置:
+
+pluginConfigs\DDD
+
+## 已知问题:
+
     舞者跳舞Buff有时会输出DOT伤害
+    
     战斗分段
+    
     Territory名称和ACT有出入
 
 发现其他问题请提Issue
