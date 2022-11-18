@@ -1,10 +1,16 @@
-# SamplePlugin
+# DDD Plugin
 
-Simple example plugin for Dalamud.
+输出ACT日志行,但是based on Dalamud.
+Log地址:pluginConfigs\DDD
 
-This is not designed to be the simplest possible example, but it is also not designed to cover everything you might want to do. For more detailed questions, come ask in [the Discord](https://discord.gg/3NMcUV5).
+##已知问题:
+    舞者跳舞Buff有时会输出DOT伤害
+    战斗分段
+    Territory名称和ACT有出入
 
-## Main Points
+发现其他问题请提Issue
+
+## Message Type
 
     ChatLog = 0,先不管
     
