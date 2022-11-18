@@ -41,8 +41,8 @@ namespace DDD.Struct
             if (obj is null or not NetStatus) return false;
             var tem = (NetStatus)obj;
             if (StatusID != tem.StatusID) return false;
-            if (StackCount != tem.StackCount) return false;
-            if (Param != tem.Param) return false;
+            //if (StackCount != tem.StackCount) return false;
+            //if (Param != tem.Param) return false;
             //if (RemainingTime >= tem.RemainingTime) return false;
             if (!SourceID.Equals(tem.SourceID)) return false;
             return true;
@@ -50,7 +50,8 @@ namespace DDD.Struct
 
         public override int GetHashCode()
         {
-            return 0;
+
+            return (int)(SourceID + (StatusID << 16));
         }
 
         public NetStatus(StatusEntry entry)
