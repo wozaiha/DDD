@@ -1,18 +1,18 @@
 namespace DDD.Struct
 {
-    struct FFXIVIpcUpdateHpMpTp
+    public struct FFXIVIpcUpdateHpMpTp
     {
         /* 0000 */
-        uint hp;
+        public uint hp;
         /* 0004 */
-        ushort mp;
+        public ushort mp;
         /* 0006 */
-        ushort tp;
+        public ushort tp;
         /* 0008 */
-        ushort gp;
+        public ushort gp;
         /* 0010 */
-        ushort unknown_10;
+        public ushort unknown_10;
         /* 0012 */
-        uint unknown_12;
+        public uint unknown_12;
     };
 };

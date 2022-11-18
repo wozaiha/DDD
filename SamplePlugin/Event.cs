@@ -60,7 +60,7 @@ namespace DDD
 
              logFileStream = File.Open(logFileName, FileMode.Append,FileAccess.Write,FileShare.Read);
              sw = new StreamWriter(logFileStream, Encoding.UTF8);
-             if (!exist) SetLog(LogMessageType.Version, ((FormattableString)$"FFXIV_ACT_Plugin Version: 2.6.6.1 (50BCD605C50A749F)").ToString(CultureInfo.InvariantCulture),DateTime.Now);
+             if (!exist) SetLog(LogMessageType.Version, ((FormattableString)$"Created by DDD based on FFXIV_ACT_Plugin Version: 2.6.6.1 @ /wozaiha/DD").ToString(CultureInfo.InvariantCulture),DateTime.Now);
 
          }
 

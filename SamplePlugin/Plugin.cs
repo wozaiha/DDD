@@ -81,6 +81,9 @@ namespace DDD
         private delegate void EnvControl(long a1, IntPtr a2);
         private Hook<EnvControl> EnvControlHook;
 
+        private delegate void UpdateHPMP(uint a1, IntPtr a2, byte a3);
+        private Hook<UpdateHPMP> UpdateHPMPHook;
+
 
         private List<GameObject> objects = new();
 
@@ -114,6 +117,8 @@ namespace DDD
             new IPC().InitIpc(this);
             //new IPC().InitSub(this);
             manager = new BuffManager(format, eventHandle);
+            DalamudApi.Framework.Update += PartyChanged;
+
 
             #region Hook
 
@@ -132,8 +137,8 @@ namespace DDD
                 DalamudApi.SigScanner.ScanText("48 8B D1 48 8D 0D ?? ?? ?? ?? E9 ?? ?? ?? ?? CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC 40 55 56"), WayMark);
             WayMarkHook.Enable();
             WayMarkPresentHook = Hook<WayMarkPresentDelegate>.FromAddress(
-                DalamudApi.SigScanner.ScanText("E8 ?? ?? ?? ?? 84 C0 74 60 33 C0"), WayMarkPresent);
-            //WayMarkPresentHook.Enable();
+                DalamudApi.SigScanner.ScanText("E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? 4C 8D 46 10 8B D7 48 8D 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? F6 05 ?? ?? ?? ?? ?? 0F 85 ?? ?? ?? ?? 48 8D 4E 10 E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? 4C 8D 46 10 8B D7 48 8D 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? F6 05 ?? ?? ?? ?? ?? 0F 85 ?? ?? ?? ?? 48 8D 56 10"), WayMarkPresent);
+            WayMarkPresentHook.Enable();
 
             GaugeHook = Hook<GaugeDelegate>.FromAddress(
                 DalamudApi.SigScanner.ScanText("E8 ?? ?? ?? ?? 80 BE ?? ?? ?? ?? ?? 0F 83 ?? ?? ?? ??"), Gauge);
@@ -155,6 +160,9 @@ namespace DDD
             EnvControlHook = Hook<EnvControl>.FromAddress(
                 DalamudApi.SigScanner.ScanText("48 89 5C 24 ?? 57 48 83 EC ?? 48 8B F9 48 8B DA 48 8B 89 ?? ?? ?? ?? 48 85 C9 74 ?? 48 8B 01 FF 50 ?? 84 C0 74 ?? 48 8B 8F ?? ?? ?? ?? 8B 03 48 8B 91 ?? ?? ?? ?? 39 02 75 ?? 48 83 B9 ?? ?? ?? ?? ?? 74 ?? 0F B6 53 ?? 44 0F B7 4B ?? 44 0F B7 43 ?? E8 ?? ?? ?? ?? 48 8B 5C 24 ?? 48 83 C4 ?? 5F C3 ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? 48 89 5C 24 ?? 57 48 83 EC ?? 33 C0"), EnvControlFunc);
             EnvControlHook.Enable();
+
+            UpdateHPMPHook = Hook<UpdateHPMP>.FromAddress(DalamudApi.SigScanner.ScanText("48 89 5C 24 ?? 48 89 6C 24 ?? 56 48 83 EC 20 83 3D ?? ?? ?? ?? ?? 41 0F B6 E8 48 8B DA 8B F1 0F 84 ?? ?? ?? ?? 48 89 7C 24 ??"),UpdateHPMPTP);
+            UpdateHPMPHook.Enable();
 
             MapIdDungeon = DalamudApi.SigScanner.GetStaticAddressFromSig("44 8B 3D ?? ?? ?? ?? 45 85 FF");
             MapIdWorld = DalamudApi.SigScanner.GetStaticAddressFromSig("44 0F 44 3D ?? ?? ?? ??");
@@ -184,7 +192,7 @@ namespace DDD
             worlds = DalamudApi.DataManager.Excel.GetSheet<World>();
 
             //DalamudApi.ClientState.TerritoryChanged += ClientState_TerritoryChanged;
-            DalamudApi.Framework.Update += PartyChanged;
+            
 
             //DalamudApi.GameNetwork.NetworkMessage += GameNetworkOnNetworkMessage;
         }
@@ -200,12 +208,7 @@ namespace DDD
             var now = DateTimeOffset.Now.ToUnixTimeMilliseconds();
             //if (now - lastTime < 10) return;
             lastTime = now;
-            var newlist = new List<GameObject>();
-            foreach (var obj in DalamudApi.ObjectTable)
-            {
-                if (!obj.IsValid()) continue;
-                newlist.Add(obj);
-            }
+            var newlist = DalamudApi.ObjectTable.ToList();
 
             var plus = newlist.Except(objects).ToList();
             var minus = objects.Except(newlist).ToList();
@@ -242,10 +245,11 @@ namespace DDD
 
         private void PartyChanged(Dalamud.Game.Framework framework)
         {
-            if (DalamudApi.ClientState.LocalPlayer == null) return;
+            
             MapChange();
             CheckPlayer();
             CompareObjects();
+            if (DalamudApi.ClientState.LocalPlayer == null) return;
             if (partyLength == DalamudApi.PartyList.Length) return;
             partyLength = DalamudApi.PartyList.Length;
             var lists = new List<uint>();
@@ -306,6 +310,7 @@ namespace DDD
             if (id == ActorControlCategory.LoseEffect) manager.RemoveStatus(entityId,new NetStatus(){Param = (byte)(arg1>>8),RemainingTime = 0f,SourceID = arg2,StackCount =(byte)(arg1&0xF),StatusID = (ushort)arg0}, time);
             if (id == ActorControlCategory.UpdateEffect) manager.RefreshStatus(entityId, new NetStatus() { Param = (byte)(arg1 >> 8), RemainingTime = 0f, SourceID = arg2, StackCount = (byte)(arg1 & 0xF), StatusID = (ushort)arg0 }, time);
             if (type == LogMessageType.DoTHoT) manager.OutputStatusList(entityId,time);
+            if (type == LogMessageType.DoTHoT && arg0 == 839) PluginLog.Error($"舞步::{id}:{entityId:X}:0={arg0:X}:1={arg1:X}:2={arg2}:3={arg3:X}:4={arg4}:5={arg5}:6={targetId:X}");
         }
 
         private unsafe void ReceiveAbilityEffect(uint sourceId, IntPtr sourceChara, IntPtr pos,
@@ -523,7 +528,16 @@ namespace DDD
             eventHandle.SetLog(LogMessageType.EnvironmentControl, $"{data.FeatureID:X}|{data.State:X}|{data.Index:X}|{data.u0:X}|{data.u1:X}|{data.u2:X}",DateTime.Now);
         }
 
-
+        void UpdateHPMPTP(uint id, IntPtr a2, byte a3)
+        {
+            var data = Marshal.PtrToStructure<FFXIVIpcUpdateHpMpTp>(a2);
+            UpdateHPMPHook.Original(id,a2,a3);
+            var combatantById = DalamudApi.ObjectTable.SearchById(id);
+            if (combatantById is not Character target) return;
+            var text = format.FormatUpdateHpMpTp(id, combatantById?.Name.TextValue, data.hp, target.MaxHp, data.mp,
+                                                 target.MaxMp, target.Position.X, target.Position.Z, target.Position.Y,target.Rotation);
+            eventHandle.SetLog(LogMessageType.UpdateHp,text,DateTime.Now);
+        }
 
 
 
@@ -543,6 +557,7 @@ namespace DDD
             EffectResultBasicHook.Dispose();
             BuffList1Hook.Dispose();
             EnvControlHook.Dispose();
+            UpdateHPMPHook.Dispose();
             eventHandle.CloseFile();
             //new IPC().Unsub();
 
