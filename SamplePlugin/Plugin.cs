@@ -288,11 +288,11 @@ namespace DDD
             var type = LogMessageType.Debug;
             (type,var message) = id switch
             {
-                ActorControlCategory.CancelCast => (LogMessageType.CancelAction, $"{format.FormatNetworkCancelMessage(entityId, entity.Name.TextValue, arg2, actions.GetRow(arg2)?.Name, arg1 == 1, arg1 != 1)}"),
-                ActorControlCategory.Hot => (LogMessageType.DoTHoT, $"{format.FormatNetworkDoTMessage(entityId, entity.Name.TextValue, true, arg0, arg1, entity?.CurrentHp, entity.MaxHp, entity.CurrentMp, entity.MaxMp, entity?.Position.X, entity?.Position.Z, entity?.Position.Y, entity?.Rotation)}"),
-                ActorControlCategory.HoT_DoT => (LogMessageType.DoTHoT, $"{format.FormatNetworkDoTMessage(entityId, entity.Name.TextValue, false, arg0, arg2, entity?.CurrentHp, entity?.MaxHp, entity?.CurrentMp, entity?.MaxHp, entity?.Position.X, entity?.Position.Z, entity?.Position.Y, entity?.Rotation)}"),
-                ActorControlCategory.Death => (LogMessageType.Death, $"{format.FormatNetworkDeathMessage(entityId, entity.Name.TextValue, arg0, DalamudApi.ObjectTable.SearchById(arg0)?.Name.TextValue)}"),
-                ActorControlCategory.TargetIcon => (LogMessageType.TargetIcon, $"{format.FormatNetworkTargetIconMessage(entityId, entity.Name.TextValue, arg1, arg2, arg0, arg3, arg4, arg5)}"),
+                ActorControlCategory.CancelCast => (LogMessageType.CancelAction, $"{format.FormatNetworkCancelMessage(entityId, entity?.Name.TextValue, arg2, actions.GetRow(arg2)?.Name, arg1 == 1, arg1 != 1)}"),
+                ActorControlCategory.Hot => (LogMessageType.DoTHoT, $"{format.FormatNetworkDoTMessage(entityId, entity?.Name.TextValue, true, arg0, arg1, entity?.CurrentHp, entity.MaxHp, entity.CurrentMp, entity.MaxMp, entity?.Position.X, entity?.Position.Z, entity?.Position.Y, entity?.Rotation)}"),
+                ActorControlCategory.HoT_DoT => (LogMessageType.DoTHoT, $"{format.FormatNetworkDoTMessage(entityId, entity?.Name.TextValue, false, arg0, arg2, entity?.CurrentHp, entity?.MaxHp, entity?.CurrentMp, entity?.MaxHp, entity?.Position.X, entity?.Position.Z, entity?.Position.Y, entity?.Rotation)}"),
+                ActorControlCategory.Death => (LogMessageType.Death, $"{format.FormatNetworkDeathMessage(entityId, entity?.Name.TextValue, arg0, DalamudApi.ObjectTable.SearchById(arg0)?.Name.TextValue)}"),
+                ActorControlCategory.TargetIcon => (LogMessageType.TargetIcon, $"{format.FormatNetworkTargetIconMessage(entityId, entity?.Name.TextValue, arg1, arg2, arg0, arg3, arg4, arg5)}"),
                 ActorControlCategory.SetTargetSign => (LogMessageType.SignMarker, $"{format.FormatNetworkSignMessage(targetId == 0xE0000000 ? "Delete" : "Add", arg0, entityId, entity.Name.TextValue, targetId == 0xE0000000 ? null : (uint)targetId, target?.Name.TextValue ?? "")}"),
                 //TODO:删除标志时的ID修正?
                 //ActorControlCategory.LoseEffect => (LogMessageType.StatusRemove, $"{format.FormatNetworkBuffMessage((ushort)arg0, status.GetRow(arg0).Name.RawString, 0.00f, arg2, DalamudApi.ObjectTable.SearchById(arg2)?.Name.TextValue ?? "", entityId, entity.Name.TextValue, (ushort)arg1, entity.CurrentHp, entity.MaxHp)}"),
@@ -307,12 +307,12 @@ namespace DDD
                 //ActorControlCategory.HoT_DoT => $"TESTING::{id}:{entityId:X}:0={arg0:X}:1={arg1:X}:2={arg2}:3={arg3:X}:4={arg4}:5={arg5}:6={targetId:X}",
                 _ => (LogMessageType.Debug, "")
             };
+            if (id == ActorControlCategory.HoT_DoT && arg1 != 3) type = LogMessageType.Debug;
             var time = DateTime.Now;
             if (type != LogMessageType.Debug) eventHandle.SetLog(type, $"{message}",time);
             if (id == ActorControlCategory.LoseEffect) manager.RemoveStatus(entityId,new NetStatus(){Param = (byte)(arg1>>8),RemainingTime = 0f,SourceID = arg2,StackCount =(byte)(arg1&0xF),StatusID = (ushort)arg0}, time);
             if (id == ActorControlCategory.UpdateEffect) manager.RefreshStatus(entityId, new NetStatus() { Param = (byte)(arg1 >> 8), RemainingTime = 0f, SourceID = arg2, StackCount = (byte)(arg1 & 0xF), StatusID = (ushort)arg0 }, time);
             if (type == LogMessageType.DoTHoT) manager.OutputStatusList(entityId,time);
-            if (type == LogMessageType.DoTHoT && arg0 == 839) PluginLog.Error($"舞步::{id}:{entityId:X}:0={arg0:X}:1={arg1:X}:2={arg2}:3={arg3:X}:4={arg4}:5={arg5}:6={targetId:X}");
         }
 
         private unsafe void ReceiveAbilityEffect(uint sourceId, IntPtr sourceChara, IntPtr pos,
@@ -391,6 +391,7 @@ namespace DDD
 
         private unsafe void MapChange()
         {
+            if (MapIdDungeon == IntPtr.Zero || MapIdDungeon == IntPtr.Zero) return;
             var MapId = *(uint*)MapIdDungeon == 0 ? *(uint*)MapIdWorld : *(uint*)MapIdDungeon;
             if (oldMap == MapId) return;
             oldMap = MapId;
