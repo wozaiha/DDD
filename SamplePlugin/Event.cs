@@ -30,7 +30,7 @@ namespace DDD
         protected virtual async void NewLog(LogMessageType type, string log)
         {
 
-            //PluginLog.Debug(log);
+            PluginLog.Debug(log);
             
             
             OnNewLog?.Invoke(this, log);
@@ -43,8 +43,7 @@ namespace DDD
             {
                 LogSender.Send(new() { Type = (int)type, Message = text });
             }
-           
-            if (!File.Exists(logFileName)) NewFile();
+            
             if (type is LogMessageType.Version or LogMessageType.Territory) logIndex = 0;
             //log = (((int)type).ToString(CultureInfo.InvariantCulture).PadLeft(2, '0') + "|" + $"{DateTime.Now:O}" + "|" + log).Replace('\0', ' ');
             var num = (int)type;
