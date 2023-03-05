@@ -95,7 +95,7 @@ namespace DDD
 
         private int partyLength = 0;
         private long lastTime;
-        private uint oldMap;
+        private uint oldMap=0;
         private uint plID;
 
         public Event eventHandle;
@@ -119,11 +119,10 @@ namespace DDD
             manager = new BuffManager(format, eventHandle);
             DalamudApi.Framework.Update += PartyChanged;
 
-
             #region Hook
 
             ReceiveAbilityHook = Hook<ReceiveAbilityDelegate>.FromAddress(
-                DalamudApi.SigScanner.ScanText("4C 89 44 24 ?? 55 56 57 41 54 41 55 41 56 48 8D 6C 24 ??"),
+                DalamudApi.SigScanner.ScanText("4C 89 44 24 ?? 55 56 41 54 41 55 41 56"),
                 ReceiveAbilityEffect);
             ReceiveAbilityHook.Enable();
             ActorControlSelfHook = Hook<ActorControlSelfDelegate>.FromAddress(
@@ -245,7 +244,10 @@ namespace DDD
 
         private void PartyChanged(Dalamud.Game.Framework framework)
         {
-            
+            if (DalamudApi.ObjectTable.Count()<1)
+            {
+                return;
+            }
             MapChange();
             CheckPlayer();
             CompareObjects();

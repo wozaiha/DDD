@@ -10,13 +10,14 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <TargetFramework>net5.0-windows</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <Platforms>x64</Platforms>
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
+     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
-    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <AppendTargetFrameworkToOutputPath>true</AppendTargetFrameworkToOutputPath>
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
   </PropertyGroup>
 
@@ -28,7 +29,7 @@
   </ItemGroup>
 
   <PropertyGroup>
-    <DalamudLibPath>E:\Programs\XIVLauncherCN\Roaming\addon\Hooks\dev\</DalamudLibPath>
+    <DalamudLibPath>E:\da\addon\Hooks\dev\</DalamudLibPath>
   </PropertyGroup>
   
    <PropertyGroup Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))'">
@@ -37,7 +38,8 @@
 
   <ItemGroup>
     <PackageReference Include="DalamudPackager" Version="2.1.8" />
-    <PackageReference Include="Machina.FFXIV" Version="2.3.4.6" />
+    <PackageReference Include="H.Pipes" Version="2.0.47">
+    </PackageReference>
     <Reference Include="FFXIVClientStructs">
       <HintPath>$(DalamudLibPath)FFXIVClientStructs.dll</HintPath>
       <Private>false</Private>

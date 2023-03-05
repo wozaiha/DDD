@@ -1,26 +1,34 @@
 {
   "version": 1,
   "dependencies": {
-    "net5.0-windows7.0": {
+    "net6.0": {
       "DalamudPackager": {
         "type": "Direct",
         "requested": "[2.1.8, )",
         "resolved": "2.1.8",
         "contentHash": "YqagNXs9InxmqkXzq7kLveImxnodkBEicAhydMXVp7dFjC7xb76U6zGgAax4/BWIWfZeWzr5DJyQSev31kj81A=="
       },
-      "Machina.FFXIV": {
+      "H.Pipes": {
         "type": "Direct",
-        "requested": "[2.3.4.6, )",
-        "resolved": "2.3.4.6",
-        "contentHash": "2KmeOSD6+rMN+kOb6BjmncW8u8U3UpMKnHeCL5s7/0gLVQCrV7vNTfvggyMT/TSY0eWiqk75FYyDXTlTsh0Rtw==",
+        "requested": "[2.0.47, )",
+        "resolved": "2.0.47",
+        "contentHash": "bupRXxzr7DuI+3BB5RlzAavnwMJf/Ohf7nX97Y0rEiyG5q1J3PxU2eIgjdqQGMyBswk4bYD57rJXZj7GvH9avQ==",
         "dependencies": {
-          "Machina": "2.3.1.1"
+          "H.Formatters.BinaryFormatter": "2.0.47"
         }
       },
-      "Machina": {
+      "H.Formatters": {
         "type": "Transitive",
-        "resolved": "2.3.1.1",
-        "contentHash": "5hD//OpkwIGWfEcsMiPUCekiyCwP3tC5gekGLKckue87vZI9SrPPXJ4alAVud7RJ1wNRlAGWJvjLW9uyYgulGA=="
+        "resolved": "2.0.47",
+        "contentHash": "aLTOHRRgz4BXFtjVagj+Ng1+bvZilL/wkyavRQKO8knzh9OIGVaZWLpZurowocmXkUH9DoImMHiC7noyU01wKg=="
+      },
+      "H.Formatters.BinaryFormatter": {
+        "type": "Transitive",
+        "resolved": "2.0.47",
+        "contentHash": "P99ScuDDQBuk2SkaruvW4z+M9goVZCPBCXuoHe2TSJ8Zn77/K/uUhIKG83Yx0ghQQClQGZLpIR9WE3NPx5s6KA==",
+        "dependencies": {
+          "H.Formatters": "2.0.47"
+        }
       }
     }
   }

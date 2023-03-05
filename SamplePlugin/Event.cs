@@ -1,35 +1,49 @@
 using System;
 using System.Globalization;
 using System.IO;
+using System.IO.Pipes;
+using System.Net;
+using System.Net.Http;
 using System.Reflection.Metadata;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
+using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Logging;
 using DDD.Plugins;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace DDD
 {
     public class Event
     {
         public EventHandler<string>? OnNewLog;
-
+        private static LogSender LogSender = new();
         private int logIndex;
 
         private string logFileName;
-        FileStream logFileStream;
-        private StreamWriter sw;
+        //FileStream logFileStream;
+        //private StreamWriter sw;
 
-        protected virtual void NewLog(LogMessageType type, string log)
+        protected virtual async void NewLog(LogMessageType type, string log)
         {
-            
-            PluginLog.Debug(log);
+
+            //PluginLog.Debug(log);
             
             
             OnNewLog?.Invoke(this, log);
         }
+        
 
         public void SetLog(LogMessageType type, string text, DateTime time)
         {
+            if (DalamudApi.Condition[ConditionFlag.DutyRecorderPlayback])
+            {
+                LogSender.Send(new() { Type = (int)type, Message = text });
+            }
+           
             if (!File.Exists(logFileName)) NewFile();
             if (type is LogMessageType.Version or LogMessageType.Territory) logIndex = 0;
             //log = (((int)type).ToString(CultureInfo.InvariantCulture).PadLeft(2, '0') + "|" + $"{DateTime.Now:O}" + "|" + log).Replace('\0', ' ');
@@ -42,12 +56,55 @@ namespace DDD
             array[4] = text.Replace('\0', ' ');
             text = string.Concat(array);
             text = text + "|" + LogOutput.u_65535(text + "|" + Interlocked.Increment(ref logIndex).ToString(CultureInfo.InvariantCulture));
-            sw?.WriteLine(text);
-            sw?.Flush();
+            //sw?.WriteLine(text);
+            //sw?.Flush();
+
+            //send(type,text);
             NewLog(type, text);
         }
+        protected  async void send(LogMessageType type, string log)
+        {
 
-         public void NewFile()
+            string PostUrl = "http://127.0.0.1:2019/act";
+            JObject patientinfo = new JObject();
+            patientinfo["type"] = (int)type;
+            patientinfo["text"] = log;
+            string sendData = JsonConvert.SerializeObject(patientinfo);
+            var resultData = await SendJson(PostUrl, sendData);
+
+        }
+        public async Task<string> SendJson(string url, string json)
+        {
+            try
+            {
+                var httpWebRequest = HttpWebRequest.Create(url);
+                httpWebRequest.ContentType = "application/json";
+                httpWebRequest.Method = "POST";
+                using (var streamWriter = new StreamWriter(httpWebRequest.GetRequestStream()))
+                {
+                    streamWriter.Write(json);
+                    streamWriter.Flush();
+                    streamWriter.Close();
+                }
+
+                var httpResponse = (HttpWebResponse)httpWebRequest.GetResponse();
+                if (httpResponse.StatusCode != HttpStatusCode.NoContent)
+                {
+
+                }
+                return "";
+                //using (var streamReader = new StreamReader(httpResponse.GetResponseStream()))
+                //{
+                //    return streamReader.ReadToEnd();
+                //}
+            }
+            catch (Exception)
+            {
+
+                return "";
+            }
+        }
+        public void NewFile()
          {
              logFileName = Path.Combine(DalamudApi.PluginInterface.ConfigDirectory.FullName,
                                         $"Network_{DateTime.Today:yyyyMMdd}.log");
@@ -58,16 +115,17 @@ namespace DDD
 
              var exist = File.Exists(logFileName);
 
-             logFileStream = File.Open(logFileName, FileMode.Append,FileAccess.Write,FileShare.Read);
-             sw = new StreamWriter(logFileStream, Encoding.UTF8);
+             //logFileStream = File.Open(logFileName, FileMode.Append,FileAccess.Write,FileShare.Read);
+             //sw = new StreamWriter(logFileStream, Encoding.UTF8);
              if (!exist) SetLog(LogMessageType.Version, ((FormattableString)$"Created by DDD based on FFXIV_ACT_Plugin Version: 2.6.6.1 @ /wozaiha/DD").ToString(CultureInfo.InvariantCulture),DateTime.Now);
 
          }
 
          public void CloseFile()
         {
-            sw?.Close();
-            logFileStream?.Close();
+            //sw?.Close();
+            //logFileStream?.Close();
+            LogSender.Dispose();
         }
     }
 
