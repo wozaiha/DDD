@@ -24,15 +24,13 @@ namespace DDD
         private int logIndex;
 
         private string logFileName;
-        //FileStream logFileStream;
-        //private StreamWriter sw;
+        FileStream logFileStream;
+        private StreamWriter sw;
 
         protected virtual async void NewLog(LogMessageType type, string log)
         {
 
-            PluginLog.Debug(log);
-            
-            
+            PluginLog.Verbose(log);
             OnNewLog?.Invoke(this, log);
         }
         
@@ -55,8 +53,10 @@ namespace DDD
             array[4] = text.Replace('\0', ' ');
             text = string.Concat(array);
             text = text + "|" + LogOutput.u_65535(text + "|" + Interlocked.Increment(ref logIndex).ToString(CultureInfo.InvariantCulture));
-            //sw?.WriteLine(text);
-            //sw?.Flush();
+
+            if (!File.Exists(logFileName)) NewFile();
+            sw?.WriteLine(text);
+            sw?.Flush();
 
             //send(type,text);
             NewLog(type, text);
@@ -114,16 +114,16 @@ namespace DDD
 
              var exist = File.Exists(logFileName);
 
-             //logFileStream = File.Open(logFileName, FileMode.Append,FileAccess.Write,FileShare.Read);
-             //sw = new StreamWriter(logFileStream, Encoding.UTF8);
-             if (!exist) SetLog(LogMessageType.Version, ((FormattableString)$"Created by DDD based on FFXIV_ACT_Plugin Version: 2.6.6.1 @ /wozaiha/DD").ToString(CultureInfo.InvariantCulture),DateTime.Now);
+            logFileStream = File.Open(logFileName, FileMode.Append, FileAccess.Write, FileShare.Read);
+            sw = new StreamWriter(logFileStream, Encoding.UTF8);
+            if (!exist) SetLog(LogMessageType.Version, ((FormattableString)$"Created by DDD based on FFXIV_ACT_Plugin Version: 2.6.6.1 @ /wozaiha/DD").ToString(CultureInfo.InvariantCulture),DateTime.Now);
 
          }
 
          public void CloseFile()
         {
-            //sw?.Close();
-            //logFileStream?.Close();
+            sw?.Close();
+            logFileStream?.Close();
             LogSender.Dispose();
         }
     }
