@@ -84,6 +84,8 @@ namespace DDD
         private delegate void UpdateHPMP(uint a1, IntPtr a2, byte a3);
         private Hook<UpdateHPMP> UpdateHPMPHook;
 
+        private delegate void UpdateParty(nint header, nint data, byte a3);
+        private Hook<UpdateParty> UpdatePartyHook;
 
         private List<GameObject> objects = new();
 
@@ -117,7 +119,7 @@ namespace DDD
             new IPC().InitIpc(this);
             //new IPC().InitSub(this);
             manager = new BuffManager(format, eventHandle);
-            DalamudApi.Framework.Update += PartyChanged;
+            //DalamudApi.Framework.Update += PartyChanged;
 
             #region Hook
 
@@ -162,6 +164,10 @@ namespace DDD
 
             UpdateHPMPHook = Hook<UpdateHPMP>.FromAddress(DalamudApi.SigScanner.ScanText("48 89 5C 24 ?? 48 89 6C 24 ?? 56 48 83 EC 20 83 3D ?? ?? ?? ?? ?? 41 0F B6 E8 48 8B DA 8B F1 0F 84 ?? ?? ?? ?? 48 89 7C 24 ??"),UpdateHPMPTP);
             UpdateHPMPHook.Enable();
+
+            UpdatePartyHook = Hook<UpdateParty>.FromAddress(DalamudApi.SigScanner.ScanText("48 89 5C 24 ?? 55 56 57 41 54 41 55 41 56 41 57 48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 84 24 ?? ?? ?? ?? 48 8B 0D ?? ?? ?? ??"), UpdatePartyDetor);
+            UpdatePartyHook.Enable();
+            
 
             MapIdDungeon = DalamudApi.SigScanner.GetStaticAddressFromSig("44 8B 3D ?? ?? ?? ?? 45 85 FF");
             MapIdWorld = DalamudApi.SigScanner.GetStaticAddressFromSig("44 0F 44 3D ?? ?? ?? ??");
@@ -242,25 +248,23 @@ namespace DDD
             
         }
 
-        private void PartyChanged(Dalamud.Game.Framework framework)
+        private void UpdatePartyDetor(nint header, nint dataptr, byte a3)
         {
-            if (DalamudApi.ObjectTable.Count()<1)
-            {
-                return;
-            }
+            var data = Marshal.PtrToStructure<Party>(dataptr);
+            UpdatePartyHook.Original(header, dataptr, a3);
+            PluginLog.Warning($"{dataptr:X}");
             MapChange();
             CheckPlayer();
             CompareObjects();
-            if (DalamudApi.ClientState.LocalPlayer == null) return;
-            if (partyLength == DalamudApi.PartyList.Length) return;
-            partyLength = DalamudApi.PartyList.Length;
+
+            partyLength = data!.partySize;
             var lists = new List<uint>();
-            foreach (var member in DalamudApi.PartyList)
+            foreach (var member in data.members)
             {
-                lists.Add(member.ObjectId);
+                lists.Add(member.charaId);
             }
 
-            eventHandle.SetLog(LogMessageType.PartyList, $"{format.FormatPartyMessage(partyLength, new ReadOnlyCollection<uint>(lists))}",DateTime.Now);
+            eventHandle.SetLog(LogMessageType.PartyList, $"{format.FormatPartyMessage(partyLength, new ReadOnlyCollection<uint>(lists))}", DateTime.Now);
         }
 
         private void StartCast(uint source, IntPtr ptr)
@@ -549,7 +553,7 @@ namespace DDD
             WindowSystem.RemoveAllWindows();
             CommandManager.RemoveHandler(CommandName);
             DalamudApi.ClientState.TerritoryChanged -= ClientState_TerritoryChanged;
-            DalamudApi.Framework.Update -= PartyChanged;
+            //DalamudApi.Framework.Update -= PartyChanged;
             ActorControlSelfHook.Dispose();
             ReceiveAbilityHook.Dispose();
             CastHook.Dispose();
@@ -561,6 +565,7 @@ namespace DDD
             BuffList1Hook.Dispose();
             EnvControlHook.Dispose();
             UpdateHPMPHook.Dispose();
+            UpdatePartyHook.Dispose();
             eventHandle.CloseFile();
             //new IPC().Unsub();
 
