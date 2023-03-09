@@ -10,38 +10,42 @@ namespace DDD.Struct
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     internal class Party
     { 
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 8)] 
-        public MemberEntry[] members;
-        ulong partyId;
-        ulong channelId;
-        public byte leaderIndex;
-        public byte partySize;
-        public ushort padding1;
-        public uint padding2;
-};
-    [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    internal class MemberEntry
-    {
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
-        public byte[] name;
-        public ulong contentId;
-        public uint charaId;
-        public uint u1;
-        public uint u2;
-        public uint hp;
-        public uint maxHp;
-        public ushort mp;
-        public ushort maxMp;
-        public ushort u3;
-        public ushort zoneId;
-        public byte gposeSelectable;
-        public byte classId;
-        public byte u5;
-        public byte level;
-        public byte isLevelSync;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 7)]
-        public byte[] unknown;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 8)]
+        public MemberEntry[] Member;
+        ulong PartyID;
+        ulong ChatChannel;
+        byte LeaderIndex;
+        public byte PartyCount;
+        byte __padding1;
+        byte __padding2;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 30 * 0xC)]
         private byte[] effects;
+    };
+    [StructLayout(LayoutKind.Explicit, Size = 440)]
+    internal class MemberEntry
+    {
+        //[MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
+        //byte[] Name;
+        //ulong CharaId;
+        [FieldOffset(32+8)]public uint EntityId;
+        //uint ParentEntityId;
+        //byte Valid;
+        //byte ClassJob;
+        //byte Sex;
+        //byte Role;
+        //byte Lv;
+        //byte LvSync;
+        //byte ObjType;
+        //byte BuddyCommand;
+        //uint Hp;
+        //uint HpMax;
+        //ushort Mp;
+        //ushort MpMax;
+        //ushort Tp;
+        //ushort TerritoryType;
+        //uint PetEntityId;
+        //[MarshalAs(UnmanagedType.ByValArray, SizeConst = 30 * 0xC)]
+        //private byte[] effects;
+
     }
 }

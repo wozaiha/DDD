@@ -84,7 +84,7 @@ namespace DDD
         private delegate void UpdateHPMP(uint a1, IntPtr a2, byte a3);
         private Hook<UpdateHPMP> UpdateHPMPHook;
 
-        private delegate void UpdateParty(nint header, nint data, byte a3);
+        private delegate void UpdateParty(IntPtr header, IntPtr data, byte a3);
         private Hook<UpdateParty> UpdatePartyHook;
 
         private List<GameObject> objects = new();
@@ -248,20 +248,17 @@ namespace DDD
             
         }
 
-        private void UpdatePartyDetor(nint header, nint dataptr, byte a3)
+        private void UpdatePartyDetor(IntPtr header, IntPtr dataptr, byte a3)
         {
-            var data = Marshal.PtrToStructure<Party>(dataptr);
             UpdatePartyHook.Original(header, dataptr, a3);
-            PluginLog.Warning($"{dataptr:X}");
             MapChange();
             CheckPlayer();
             CompareObjects();
-
-            partyLength = data!.partySize;
+            partyLength = Marshal.ReadByte(dataptr, (440 * 8) + 17);
             var lists = new List<uint>();
-            foreach (var member in data.members)
+            for (int i = 32 + 8; i < 440 * partyLength; i+= 440)
             {
-                lists.Add(member.charaId);
+                lists.Add((uint)Marshal.ReadInt32(dataptr,i));
             }
 
             eventHandle.SetLog(LogMessageType.PartyList, $"{format.FormatPartyMessage(partyLength, new ReadOnlyCollection<uint>(lists))}", DateTime.Now);
