@@ -22,6 +22,7 @@ using Action = Lumina.Excel.GeneratedSheets.Action;
 using DDD.Struct;
 using DDD.Plugins;
 using System.Globalization;
+using Dalamud.Game;
 
 namespace DDD
 {
@@ -197,9 +198,14 @@ namespace DDD
             worlds = DalamudApi.DataManager.Excel.GetSheet<World>();
 
             //DalamudApi.ClientState.TerritoryChanged += ClientState_TerritoryChanged;
-            
+            DalamudApi.Framework.Update += FrameworkOnUpdate;
 
             //DalamudApi.GameNetwork.NetworkMessage += GameNetworkOnNetworkMessage;
+        }
+
+        private void FrameworkOnUpdate(Framework framework)
+        {
+            CompareObjects();
         }
 
         private void GameNetworkOnNetworkMessage(IntPtr dataptr, ushort opcode, uint sourceactorid, uint targetactorid, NetworkMessageDirection direction)
@@ -210,8 +216,11 @@ namespace DDD
 
         private void CompareObjects()
         {
+            MapChange();
+            CheckPlayer();
+            PluginLog.Debug($"CompareObjects");
             var now = DateTimeOffset.Now.ToUnixTimeMilliseconds();
-            //if (now - lastTime < 10) return;
+            if (now - lastTime < 1000 / 60) return;
             lastTime = now;
             var newlist = DalamudApi.ObjectTable.ToList();
 
@@ -245,27 +254,27 @@ namespace DDD
                 manager.RemoveAll(obj.ObjectId);
             }
             objects = newlist;
-            
+            PluginLog.Debug($"CompareObjects Finish");
         }
 
         private void UpdatePartyDetor(IntPtr header, IntPtr dataptr, byte a3)
         {
-            UpdatePartyHook.Original(header, dataptr, a3);
-            MapChange();
-            CheckPlayer();
-            CompareObjects();
+            PluginLog.Debug($"PartyLength = {partyLength}");
+            PluginLog.Debug($"PartyUpdate");
             partyLength = Marshal.ReadByte(dataptr, (440 * 8) + 17);
+            //var party = Marshal.PtrToStructure<Party>(dataptr);
             var lists = new List<uint>();
             for (int i = 32 + 8; i < 440 * partyLength; i+= 440)
             {
                 lists.Add((uint)Marshal.ReadInt32(dataptr,i));
             }
-
+            UpdatePartyHook.Original(header, dataptr, a3);
             eventHandle.SetLog(LogMessageType.PartyList, $"{format.FormatPartyMessage(partyLength, new ReadOnlyCollection<uint>(lists))}", DateTime.Now);
         }
 
         private void StartCast(uint source, IntPtr ptr)
         {
+            PluginLog.Debug($"StartCast");
             var data = Marshal.PtrToStructure<ActorCast>(ptr);
             CastHook.Original(source, ptr);
             var soutceobj = DalamudApi.ObjectTable.SearchById(source);
@@ -281,7 +290,7 @@ namespace DDD
                                              uint arg3, uint arg4, uint arg5, ulong targetId, byte a10)
         {
 
-            //PluginLog.Warning($"{entityId:X}:{id}:{arg0}:{arg1}:{arg2}:{arg3}:{arg4}:{arg5}:{targetId:X}:{a10}");
+            PluginLog.Debug($"{entityId:X}:{id}:{arg0}:{arg1}:{arg2}:{arg3}:{arg4}:{arg5}:{targetId:X}:{a10}");
             ActorControlSelfHook.Original(entityId, id, arg0, arg1, arg2, arg3, arg4, arg5, targetId, a10);
             var obj = DalamudApi.ObjectTable.SearchById(entityId);
             if (obj is not Character entity) return;
@@ -319,7 +328,7 @@ namespace DDD
         private unsafe void ReceiveAbilityEffect(uint sourceId, IntPtr sourceChara, IntPtr pos,
                                                    IntPtr effectHeader, IntPtr effectArray, IntPtr effectTrail)
         {
-
+            PluginLog.Debug($"Ability");
             var targetCount = *(byte*)(effectHeader + 0x21);
             var data = Marshal.PtrToStructure<Ability1>(effectHeader);
             var effects = Marshal.PtrToStructure<EffectsEntry>(effectArray);
@@ -380,6 +389,7 @@ namespace DDD
 
         private unsafe void ClientState_TerritoryChanged(object? sender, ushort e)
         {
+            PluginLog.Debug($"Terryitory");
             CheckPlayer();
             var placeName = territory.GetRow(DalamudApi.ClientState.TerritoryType)?.PlaceName.Value?.Name.RawString;
             if (!string.IsNullOrEmpty(territory.GetRow(DalamudApi.ClientState.TerritoryType)?.ContentFinderCondition.Value?.Name.RawString))
@@ -392,6 +402,7 @@ namespace DDD
 
         private unsafe void MapChange()
         {
+            PluginLog.Debug($"Map");
             if (MapIdDungeon == IntPtr.Zero || MapIdDungeon == IntPtr.Zero) return;
             var MapId = *(uint*)MapIdDungeon == 0 ? *(uint*)MapIdWorld : *(uint*)MapIdDungeon;
             if (oldMap == MapId) return;
@@ -403,6 +414,7 @@ namespace DDD
 
         private void CheckPlayer()
         {
+            PluginLog.Debug($"CheckPlayer");
             if (DalamudApi.ClientState.LocalPlayer is null || plID == DalamudApi.ClientState.LocalPlayer.ObjectId) return;
             plID = DalamudApi.ClientState.LocalPlayer.ObjectId;
             eventHandle.SetLog(LogMessageType.ChangePrimaryPlayer, $"{format.FormatChangePrimaryPlayerMessage(plID, DalamudApi.ClientState.LocalPlayer.Name.TextValue)}",DateTime.Now);
@@ -443,6 +455,7 @@ namespace DDD
 
         private void EffectResult(uint targetId, IntPtr ptr, byte a3)
         {
+            PluginLog.Debug($"EffectR");
             var data = Marshal.PtrToStructure<FFXIVIpcEffectResult>(ptr);
             
             EffectResultHook.Original(targetId, ptr, a3);
@@ -476,6 +489,7 @@ namespace DDD
 
         private void EffectResultBasic(uint targetId, IntPtr ptr, byte a3)
         {
+            PluginLog.Debug($"EffectResultBasic");
             var data = Marshal.PtrToStructure<FFXIVIpcEffectResult>(ptr);
             //PluginLog.Warning($"Basic:{data.Effects[0].EffectID}");
             EffectResultBasicHook.Original(targetId, ptr, a3);
@@ -498,6 +512,7 @@ namespace DDD
 
         private void BuffList1Do(uint targetId, IntPtr b, byte c)
         {
+            PluginLog.Debug($"BuffList");
             var effectList = Marshal.PtrToStructure<StatusEffectList>(b);
             BuffList1Hook.Original(targetId, b, c);
             var array = new uint[93];
@@ -567,6 +582,7 @@ namespace DDD
             //new IPC().Unsub();
 
             DalamudApi.GameNetwork.NetworkMessage -= GameNetworkOnNetworkMessage;
+            DalamudApi.Framework.Update -= FrameworkOnUpdate;
         }
 
         private void OnCommand(string command, string args)

@@ -7,22 +7,22 @@ using System.Threading.Tasks;
 
 namespace DDD.Struct
 {
-    [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    internal class Party
+    [StructLayout(LayoutKind.Explicit, Size = 0xDD8)]
+    internal struct Party
     { 
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 8)]
-        public MemberEntry[] Member;
-        ulong PartyID;
-        ulong ChatChannel;
-        byte LeaderIndex;
-        public byte PartyCount;
-        byte __padding1;
-        byte __padding2;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 30 * 0xC)]
-        private byte[] effects;
+        [FieldOffset(0x0)]public MemberEntry[] Member;
+        [FieldOffset(8 * 440)]ulong PartyID;
+        [FieldOffset(8 * 440 + 0x8)] ulong ChatChannel;
+        [FieldOffset(8 * 440 + 0x10)] byte LeaderIndex;
+        [FieldOffset(8 * 440 + 0x18)] public  byte PartyCount;
+        //byte __padding1;
+        //byte __padding2;
+        //[MarshalAs(UnmanagedType.ByValArray, SizeConst = 30 * 0xC)]
+        //private byte[] effects;
     };
     [StructLayout(LayoutKind.Explicit, Size = 440)]
-    internal class MemberEntry
+    internal struct MemberEntry
     {
         //[MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
         //byte[] Name;
