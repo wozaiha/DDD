@@ -1,8 +1,4 @@
-using System.Collections.Generic;
-using System.Diagnostics.Contracts;
 using System.Runtime.InteropServices;
-using System.Text;
-using Lumina.Excel.GeneratedSheets;
 
 namespace DDD.Struct
 {

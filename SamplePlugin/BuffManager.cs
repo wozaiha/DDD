@@ -119,7 +119,7 @@ public class BuffManager
 
         foreach (var buff in remove)
         {
-            ;RemoveStatus(id,buff,time);
+            RemoveStatus(id,buff,time);
         }
 
         foreach (var buff in update)

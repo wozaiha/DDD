@@ -1,10 +1,7 @@
 using System;
 using System.Globalization;
 using System.IO;
-using System.IO.Pipes;
 using System.Net;
-using System.Net.Http;
-using System.Reflection.Metadata;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -13,7 +10,6 @@ using Dalamud.Logging;
 using DDD.Plugins;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace DDD
 {
@@ -26,6 +22,7 @@ namespace DDD
         private string logFileName;
         FileStream logFileStream;
         private StreamWriter sw;
+        public bool Output = false;
 
         protected virtual async void NewLog(LogMessageType type, string log)
         {
@@ -54,10 +51,13 @@ namespace DDD
             text = string.Concat(array);
             text = text + "|" + LogOutput.u_65535(text + "|" + Interlocked.Increment(ref logIndex).ToString(CultureInfo.InvariantCulture));
 
-            if (!File.Exists(logFileName)) NewFile();
-            sw?.WriteLine(text);
-            sw?.Flush();
-
+            if (Output)
+            {
+                if (!File.Exists(logFileName)) NewFile();
+                sw?.WriteLine(text);
+                sw?.Flush();
+            }
+            
             //send(type,text);
             NewLog(type, text);
         }

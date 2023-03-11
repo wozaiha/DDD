@@ -1,27 +1,22 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using Dalamud.Game.ClientState.Objects.Enums;
 using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Game.Command;
-using Dalamud.Game.Network;
 using Dalamud.Hooking;
 using Dalamud.Interface.Windowing;
 using Dalamud.IoC;
-using Dalamud.Logging;
 using Dalamud.Plugin;
-using Dalamud.Utility;
 using Lumina.Excel;
 using Lumina.Excel.GeneratedSheets;
 using DDD.Windows;
 using Action = Lumina.Excel.GeneratedSheets.Action;
 using DDD.Struct;
 using DDD.Plugins;
-using System.Globalization;
 using Dalamud.Game;
 
 namespace DDD
@@ -39,10 +34,8 @@ namespace DDD
         private readonly LogFormat format = new();
         private ExcelSheet<TerritoryType>? territory;
         private ExcelSheet<Action>? actions;
-        private ExcelSheet<Status>? status;
         private ExcelSheet<Map>? maps;
         private ExcelSheet<World>? worlds;
-        private List<NetStatus> netStatusList = new();
         private BuffManager manager;
 
         private delegate void EffectDelegate(uint sourceId, IntPtr sourceCharacter);
@@ -102,6 +95,7 @@ namespace DDD
         private uint plID;
 
         public Event eventHandle;
+        private IPC ipc;
 
         public Plugin(
             [RequiredVersion("1.0")] DalamudPluginInterface pluginInterface,
@@ -115,12 +109,10 @@ namespace DDD
 
             DalamudApi.Initialize(this, PluginInterface);
 
-            
             eventHandle = new Event();
-            new IPC().InitIpc(this);
-            //new IPC().InitSub(this);
+            ipc = new IPC();
+            ipc.InitIpc(this);
             manager = new BuffManager(format, eventHandle);
-            //DalamudApi.Framework.Update += PartyChanged;
 
             #region Hook
 
@@ -176,12 +168,9 @@ namespace DDD
 
             #endregion
 
-            // you might normally want to embed resources and load them from the manifest stream
-            var imagePath = Path.Combine(PluginInterface.AssemblyLocation.Directory?.FullName!, "goat.png");
-            var goatImage = PluginInterface.UiBuilder.LoadImage(imagePath);
 
             WindowSystem.AddWindow(new ConfigWindow(this));
-            WindowSystem.AddWindow(new MainWindow(this, goatImage));
+            //WindowSystem.AddWindow(new MainWindow(this, goatImage));
 
             CommandManager.AddHandler(CommandName, new CommandInfo(OnCommand)
             {
@@ -193,32 +182,24 @@ namespace DDD
 
             territory = DalamudApi.DataManager.Excel.GetSheet<TerritoryType>();
             actions = DalamudApi.DataManager.Excel.GetSheet<Action>();
-            status = DalamudApi.DataManager.Excel.GetSheet<Status>();
+            DalamudApi.DataManager.Excel.GetSheet<Status>();
             maps = DalamudApi.DataManager.Excel.GetSheet<Map>();
             worlds = DalamudApi.DataManager.Excel.GetSheet<World>();
 
-            //DalamudApi.ClientState.TerritoryChanged += ClientState_TerritoryChanged;
             DalamudApi.Framework.Update += FrameworkOnUpdate;
 
-            //DalamudApi.GameNetwork.NetworkMessage += GameNetworkOnNetworkMessage;
         }
 
         private void FrameworkOnUpdate(Framework framework)
         {
             CompareObjects();
         }
-
-        private void GameNetworkOnNetworkMessage(IntPtr dataptr, ushort opcode, uint sourceactorid, uint targetactorid, NetworkMessageDirection direction)
-        {
-            if (opcode is 0x300 or 0x12C or 0x21E) return;
-            PluginLog.Warning($"GOT OPCode:{opcode:X}:");
-        }
-
+        
         private void CompareObjects()
         {
             MapChange();
             CheckPlayer();
-            PluginLog.Debug($"CompareObjects");
+            //PluginLog.Debug($"CompareObjects");
             var now = DateTimeOffset.Now.ToUnixTimeMilliseconds();
             if (now - lastTime < 1000 / 60) return;
             lastTime = now;
@@ -254,13 +235,13 @@ namespace DDD
                 manager.RemoveAll(obj.ObjectId);
             }
             objects = newlist;
-            PluginLog.Debug($"CompareObjects Finish");
+            //PluginLog.Debug($"CompareObjects Finish");
         }
 
         private void UpdatePartyDetor(IntPtr header, IntPtr dataptr, byte a3)
         {
-            PluginLog.Debug($"PartyLength = {partyLength}");
-            PluginLog.Debug($"PartyUpdate");
+            //PluginLog.Debug($"PartyLength = {partyLength}");
+            //PluginLog.Debug($"PartyUpdate");
             partyLength = Marshal.ReadByte(dataptr, (440 * 8) + 17);
             //var party = Marshal.PtrToStructure<Party>(dataptr);
             var lists = new List<uint>();
@@ -274,7 +255,7 @@ namespace DDD
 
         private void StartCast(uint source, IntPtr ptr)
         {
-            PluginLog.Debug($"StartCast");
+            //PluginLog.Debug($"StartCast");
             var data = Marshal.PtrToStructure<ActorCast>(ptr);
             CastHook.Original(source, ptr);
             var soutceobj = DalamudApi.ObjectTable.SearchById(source);
@@ -290,7 +271,7 @@ namespace DDD
                                              uint arg3, uint arg4, uint arg5, ulong targetId, byte a10)
         {
 
-            PluginLog.Debug($"{entityId:X}:{id}:{arg0}:{arg1}:{arg2}:{arg3}:{arg4}:{arg5}:{targetId:X}:{a10}");
+            //PluginLog.Debug($"{entityId:X}:{id}:{arg0}:{arg1}:{arg2}:{arg3}:{arg4}:{arg5}:{targetId:X}:{a10}");
             ActorControlSelfHook.Original(entityId, id, arg0, arg1, arg2, arg3, arg4, arg5, targetId, a10);
             var obj = DalamudApi.ObjectTable.SearchById(entityId);
             if (obj is not Character entity) return;
@@ -328,7 +309,7 @@ namespace DDD
         private unsafe void ReceiveAbilityEffect(uint sourceId, IntPtr sourceChara, IntPtr pos,
                                                    IntPtr effectHeader, IntPtr effectArray, IntPtr effectTrail)
         {
-            PluginLog.Debug($"Ability");
+            //PluginLog.Debug($"Ability");
             var targetCount = *(byte*)(effectHeader + 0x21);
             var data = Marshal.PtrToStructure<Ability1>(effectHeader);
             var effects = Marshal.PtrToStructure<EffectsEntry>(effectArray);
@@ -387,9 +368,9 @@ namespace DDD
             //ReceiveAbilityHook.Original(sourceId, sourceChara, pos, effectHeader, effectArray, effectTrail);
         }
 
-        private unsafe void ClientState_TerritoryChanged(object? sender, ushort e)
+        private unsafe void ClientState_TerritoryChanged()
         {
-            PluginLog.Debug($"Terryitory");
+            //PluginLog.Debug($"Terryitory");
             CheckPlayer();
             var placeName = territory.GetRow(DalamudApi.ClientState.TerritoryType)?.PlaceName.Value?.Name.RawString;
             if (!string.IsNullOrEmpty(territory.GetRow(DalamudApi.ClientState.TerritoryType)?.ContentFinderCondition.Value?.Name.RawString))
@@ -402,19 +383,19 @@ namespace DDD
 
         private unsafe void MapChange()
         {
-            PluginLog.Debug($"Map");
+            //PluginLog.Debug($"Map");
             if (MapIdDungeon == IntPtr.Zero || MapIdDungeon == IntPtr.Zero) return;
             var MapId = *(uint*)MapIdDungeon == 0 ? *(uint*)MapIdWorld : *(uint*)MapIdDungeon;
             if (oldMap == MapId) return;
             oldMap = MapId;
             var map = maps.GetRow(MapId);
-            ClientState_TerritoryChanged(null,0);
+            ClientState_TerritoryChanged();
             eventHandle.SetLog(LogMessageType.ChangeMap, $"{format.FormatChangeMapMessage(MapId, map?.PlaceNameRegion.Value?.Name, map?.PlaceName.Value?.Name, map?.PlaceNameSub.Value?.Name)}",DateTime.Now);
         }
 
         private void CheckPlayer()
         {
-            PluginLog.Debug($"CheckPlayer");
+            //PluginLog.Debug($"CheckPlayer");
             if (DalamudApi.ClientState.LocalPlayer is null || plID == DalamudApi.ClientState.LocalPlayer.ObjectId) return;
             plID = DalamudApi.ClientState.LocalPlayer.ObjectId;
             eventHandle.SetLog(LogMessageType.ChangePrimaryPlayer, $"{format.FormatChangePrimaryPlayerMessage(plID, DalamudApi.ClientState.LocalPlayer.Name.TextValue)}",DateTime.Now);
@@ -455,7 +436,7 @@ namespace DDD
 
         private void EffectResult(uint targetId, IntPtr ptr, byte a3)
         {
-            PluginLog.Debug($"EffectR");
+            //PluginLog.Debug($"EffectR");
             var data = Marshal.PtrToStructure<FFXIVIpcEffectResult>(ptr);
             
             EffectResultHook.Original(targetId, ptr, a3);
@@ -489,7 +470,7 @@ namespace DDD
 
         private void EffectResultBasic(uint targetId, IntPtr ptr, byte a3)
         {
-            PluginLog.Debug($"EffectResultBasic");
+            //PluginLog.Debug($"EffectResultBasic");
             var data = Marshal.PtrToStructure<FFXIVIpcEffectResult>(ptr);
             //PluginLog.Warning($"Basic:{data.Effects[0].EffectID}");
             EffectResultBasicHook.Original(targetId, ptr, a3);
@@ -512,7 +493,7 @@ namespace DDD
 
         private void BuffList1Do(uint targetId, IntPtr b, byte c)
         {
-            PluginLog.Debug($"BuffList");
+            //PluginLog.Debug($"BuffList");
             var effectList = Marshal.PtrToStructure<StatusEffectList>(b);
             BuffList1Hook.Original(targetId, b, c);
             var array = new uint[93];
@@ -564,8 +545,6 @@ namespace DDD
         {
             WindowSystem.RemoveAllWindows();
             CommandManager.RemoveHandler(CommandName);
-            DalamudApi.ClientState.TerritoryChanged -= ClientState_TerritoryChanged;
-            //DalamudApi.Framework.Update -= PartyChanged;
             ActorControlSelfHook.Dispose();
             ReceiveAbilityHook.Dispose();
             CastHook.Dispose();
@@ -579,16 +558,14 @@ namespace DDD
             UpdateHPMPHook.Dispose();
             UpdatePartyHook.Dispose();
             eventHandle.CloseFile();
-            //new IPC().Unsub();
 
-            DalamudApi.GameNetwork.NetworkMessage -= GameNetworkOnNetworkMessage;
             DalamudApi.Framework.Update -= FrameworkOnUpdate;
         }
 
         private void OnCommand(string command, string args)
         {
             // in response to the slash command, just display our main ui
-            WindowSystem.GetWindow("My Amazing Window").IsOpen = true;
+            WindowSystem.GetWindow("A Wonderful Configuration Window").IsOpen = true;
         }
 
         private void DrawUI()

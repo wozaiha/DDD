@@ -8,6 +8,7 @@ namespace DDD.Windows;
 public class ConfigWindow : Window, IDisposable
 {
     private Configuration Configuration;
+    private Plugin Plugin;
 
     public ConfigWindow(Plugin plugin) : base(
         "A Wonderful Configuration Window",
@@ -18,18 +19,17 @@ public class ConfigWindow : Window, IDisposable
         SizeCondition = ImGuiCond.Always;
 
         Configuration = plugin.Configuration;
+        Plugin = plugin;
+        Plugin.eventHandle.Output = Configuration.Output;
     }
 
     public void Dispose() { }
 
     public override void Draw()
     {
-        // can't ref a property, so use a local copy
-        var configValue = Configuration.SomePropertyToBeSavedAndWithADefault;
-        if (ImGui.Checkbox("Random Config Bool", ref configValue))
+        if (ImGui.Checkbox("输出Log文件", ref Configuration.Output))
         {
-            Configuration.SomePropertyToBeSavedAndWithADefault = configValue;
-            // can save immediately on change, if you don't want to provide a "Save and Close" button
+            Plugin.eventHandle.Output = Configuration.Output;
             Configuration.Save();
         }
     }
