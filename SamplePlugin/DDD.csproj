@@ -10,7 +10,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net7.0</TargetFramework>
     <Platforms>x64</Platforms>
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
@@ -29,7 +29,7 @@
   </ItemGroup>
 
   <PropertyGroup>
-    <DalamudLibPath>E:\da\addon\Hooks\dev\</DalamudLibPath>
+      <DalamudLibPath>C:\Users\Administrator\AppData\Roaming\XIVLauncher\addon\Hooks\dev\</DalamudLibPath>
   </PropertyGroup>
   
    <PropertyGroup Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))'">
@@ -37,7 +37,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="DalamudPackager" Version="2.1.8" />
     <PackageReference Include="H.Pipes" Version="2.0.47">
     </PackageReference>
     <Reference Include="FFXIVClientStructs">

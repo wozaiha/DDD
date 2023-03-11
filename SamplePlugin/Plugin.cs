@@ -22,6 +22,7 @@ using Action = Lumina.Excel.GeneratedSheets.Action;
 using DDD.Struct;
 using DDD.Plugins;
 using System.Globalization;
+using Dalamud.Game;
 
 namespace DDD
 {
@@ -84,6 +85,8 @@ namespace DDD
         private delegate void UpdateHPMP(uint a1, IntPtr a2, byte a3);
         private Hook<UpdateHPMP> UpdateHPMPHook;
 
+        private delegate void UpdateParty(IntPtr header, IntPtr data, byte a3);
+        private Hook<UpdateParty> UpdatePartyHook;
 
         private List<GameObject> objects = new();
 
@@ -117,7 +120,7 @@ namespace DDD
             new IPC().InitIpc(this);
             //new IPC().InitSub(this);
             manager = new BuffManager(format, eventHandle);
-            DalamudApi.Framework.Update += PartyChanged;
+            //DalamudApi.Framework.Update += PartyChanged;
 
             #region Hook
 
@@ -136,7 +139,7 @@ namespace DDD
                 DalamudApi.SigScanner.ScanText("48 8B D1 48 8D 0D ?? ?? ?? ?? E9 ?? ?? ?? ?? CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC 40 55 56"), WayMark);
             WayMarkHook.Enable();
             WayMarkPresentHook = Hook<WayMarkPresentDelegate>.FromAddress(
-                DalamudApi.SigScanner.ScanText("E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? 4C 8D 46 10 8B D7 48 8D 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? F6 05 ?? ?? ?? ?? ?? 0F 85 ?? ?? ?? ?? 48 8D 4E 10 E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? 4C 8D 46 10 8B D7 48 8D 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? F6 05 ?? ?? ?? ?? ?? 0F 85 ?? ?? ?? ?? 48 8D 56 10"), WayMarkPresent);
+                DalamudApi.SigScanner.ScanText("E9 ?? ?? ?? ?? 4C 8D 43 10 8B D6 48 8D 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? F6 05 ?? ?? ?? ?? ?? 0F 85 ?? ?? ?? ?? 48 8D 4B 10 48 8B 7C 24 ?? 48 8B 5C 24 ?? 48 83 C4 50 5E E9 ?? ?? ?? ?? 4C 8D 43 10 8B D6 48 8D 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? F6 05 ?? ?? ?? ?? ?? 0F 85 ?? ?? ?? ?? 48 8D 53 10"), WayMarkPresent);
             WayMarkPresentHook.Enable();
 
             GaugeHook = Hook<GaugeDelegate>.FromAddress(
@@ -162,6 +165,10 @@ namespace DDD
 
             UpdateHPMPHook = Hook<UpdateHPMP>.FromAddress(DalamudApi.SigScanner.ScanText("48 89 5C 24 ?? 48 89 6C 24 ?? 56 48 83 EC 20 83 3D ?? ?? ?? ?? ?? 41 0F B6 E8 48 8B DA 8B F1 0F 84 ?? ?? ?? ?? 48 89 7C 24 ??"),UpdateHPMPTP);
             UpdateHPMPHook.Enable();
+
+            UpdatePartyHook = Hook<UpdateParty>.FromAddress(DalamudApi.SigScanner.ScanText("48 89 5C 24 ?? 55 56 57 41 54 41 55 41 56 41 57 48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 84 24 ?? ?? ?? ?? 48 8B 0D ?? ?? ?? ??"), UpdatePartyDetor);
+            UpdatePartyHook.Enable();
+            
 
             MapIdDungeon = DalamudApi.SigScanner.GetStaticAddressFromSig("44 8B 3D ?? ?? ?? ?? 45 85 FF");
             MapIdWorld = DalamudApi.SigScanner.GetStaticAddressFromSig("44 0F 44 3D ?? ?? ?? ??");
@@ -191,9 +198,14 @@ namespace DDD
             worlds = DalamudApi.DataManager.Excel.GetSheet<World>();
 
             //DalamudApi.ClientState.TerritoryChanged += ClientState_TerritoryChanged;
-            
+            DalamudApi.Framework.Update += FrameworkOnUpdate;
 
             //DalamudApi.GameNetwork.NetworkMessage += GameNetworkOnNetworkMessage;
+        }
+
+        private void FrameworkOnUpdate(Framework framework)
+        {
+            CompareObjects();
         }
 
         private void GameNetworkOnNetworkMessage(IntPtr dataptr, ushort opcode, uint sourceactorid, uint targetactorid, NetworkMessageDirection direction)
@@ -204,8 +216,11 @@ namespace DDD
 
         private void CompareObjects()
         {
+            MapChange();
+            CheckPlayer();
+            PluginLog.Debug($"CompareObjects");
             var now = DateTimeOffset.Now.ToUnixTimeMilliseconds();
-            //if (now - lastTime < 10) return;
+            if (now - lastTime < 1000 / 60) return;
             lastTime = now;
             var newlist = DalamudApi.ObjectTable.ToList();
 
@@ -239,32 +254,27 @@ namespace DDD
                 manager.RemoveAll(obj.ObjectId);
             }
             objects = newlist;
-            
+            PluginLog.Debug($"CompareObjects Finish");
         }
 
-        private void PartyChanged(Dalamud.Game.Framework framework)
+        private void UpdatePartyDetor(IntPtr header, IntPtr dataptr, byte a3)
         {
-            if (DalamudApi.ObjectTable.Count()<1)
-            {
-                return;
-            }
-            MapChange();
-            CheckPlayer();
-            CompareObjects();
-            if (DalamudApi.ClientState.LocalPlayer == null) return;
-            if (partyLength == DalamudApi.PartyList.Length) return;
-            partyLength = DalamudApi.PartyList.Length;
+            PluginLog.Debug($"PartyLength = {partyLength}");
+            PluginLog.Debug($"PartyUpdate");
+            partyLength = Marshal.ReadByte(dataptr, (440 * 8) + 17);
+            //var party = Marshal.PtrToStructure<Party>(dataptr);
             var lists = new List<uint>();
-            foreach (var member in DalamudApi.PartyList)
+            for (int i = 32 + 8; i < 440 * partyLength; i+= 440)
             {
-                lists.Add(member.ObjectId);
+                lists.Add((uint)Marshal.ReadInt32(dataptr,i));
             }
-
-            eventHandle.SetLog(LogMessageType.PartyList, $"{format.FormatPartyMessage(partyLength, new ReadOnlyCollection<uint>(lists))}",DateTime.Now);
+            UpdatePartyHook.Original(header, dataptr, a3);
+            eventHandle.SetLog(LogMessageType.PartyList, $"{format.FormatPartyMessage(partyLength, new ReadOnlyCollection<uint>(lists))}", DateTime.Now);
         }
 
         private void StartCast(uint source, IntPtr ptr)
         {
+            PluginLog.Debug($"StartCast");
             var data = Marshal.PtrToStructure<ActorCast>(ptr);
             CastHook.Original(source, ptr);
             var soutceobj = DalamudApi.ObjectTable.SearchById(source);
@@ -280,7 +290,7 @@ namespace DDD
                                              uint arg3, uint arg4, uint arg5, ulong targetId, byte a10)
         {
 
-            //PluginLog.Warning($"{entityId:X}:{id}:{arg0}:{arg1}:{arg2}:{arg3}:{arg4}:{arg5}:{targetId:X}:{a10}");
+            PluginLog.Debug($"{entityId:X}:{id}:{arg0}:{arg1}:{arg2}:{arg3}:{arg4}:{arg5}:{targetId:X}:{a10}");
             ActorControlSelfHook.Original(entityId, id, arg0, arg1, arg2, arg3, arg4, arg5, targetId, a10);
             var obj = DalamudApi.ObjectTable.SearchById(entityId);
             if (obj is not Character entity) return;
@@ -288,11 +298,11 @@ namespace DDD
             var type = LogMessageType.Debug;
             (type,var message) = id switch
             {
-                ActorControlCategory.CancelCast => (LogMessageType.CancelAction, $"{format.FormatNetworkCancelMessage(entityId, entity.Name.TextValue, arg2, actions.GetRow(arg2)?.Name, arg1 == 1, arg1 != 1)}"),
-                ActorControlCategory.Hot => (LogMessageType.DoTHoT, $"{format.FormatNetworkDoTMessage(entityId, entity.Name.TextValue, true, arg0, arg1, entity?.CurrentHp, entity.MaxHp, entity.CurrentMp, entity.MaxMp, entity?.Position.X, entity?.Position.Z, entity?.Position.Y, entity?.Rotation)}"),
-                ActorControlCategory.HoT_DoT => (LogMessageType.DoTHoT, $"{format.FormatNetworkDoTMessage(entityId, entity.Name.TextValue, false, arg0, arg2, entity?.CurrentHp, entity?.MaxHp, entity?.CurrentMp, entity?.MaxHp, entity?.Position.X, entity?.Position.Z, entity?.Position.Y, entity?.Rotation)}"),
-                ActorControlCategory.Death => (LogMessageType.Death, $"{format.FormatNetworkDeathMessage(entityId, entity.Name.TextValue, arg0, DalamudApi.ObjectTable.SearchById(arg0)?.Name.TextValue)}"),
-                ActorControlCategory.TargetIcon => (LogMessageType.TargetIcon, $"{format.FormatNetworkTargetIconMessage(entityId, entity.Name.TextValue, arg1, arg2, arg0, arg3, arg4, arg5)}"),
+                ActorControlCategory.CancelCast => (LogMessageType.CancelAction, $"{format.FormatNetworkCancelMessage(entityId, entity?.Name.TextValue, arg2, actions.GetRow(arg2)?.Name, arg1 == 1, arg1 != 1)}"),
+                ActorControlCategory.Hot => (LogMessageType.DoTHoT, $"{format.FormatNetworkDoTMessage(entityId, entity?.Name.TextValue, true, arg0, arg1, entity?.CurrentHp, entity.MaxHp, entity.CurrentMp, entity.MaxMp, entity?.Position.X, entity?.Position.Z, entity?.Position.Y, entity?.Rotation)}"),
+                ActorControlCategory.HoT_DoT => (LogMessageType.DoTHoT, $"{format.FormatNetworkDoTMessage(entityId, entity?.Name.TextValue, false, arg0, arg2, entity?.CurrentHp, entity?.MaxHp, entity?.CurrentMp, entity?.MaxHp, entity?.Position.X, entity?.Position.Z, entity?.Position.Y, entity?.Rotation)}"),
+                ActorControlCategory.Death => (LogMessageType.Death, $"{format.FormatNetworkDeathMessage(entityId, entity?.Name.TextValue, arg0, DalamudApi.ObjectTable.SearchById(arg0)?.Name.TextValue)}"),
+                ActorControlCategory.TargetIcon => (LogMessageType.TargetIcon, $"{format.FormatNetworkTargetIconMessage(entityId, entity?.Name.TextValue, arg1, arg2, arg0, arg3, arg4, arg5)}"),
                 ActorControlCategory.SetTargetSign => (LogMessageType.SignMarker, $"{format.FormatNetworkSignMessage(targetId == 0xE0000000 ? "Delete" : "Add", arg0, entityId, entity.Name.TextValue, targetId == 0xE0000000 ? null : (uint)targetId, target?.Name.TextValue ?? "")}"),
                 //TODO:删除标志时的ID修正?
                 //ActorControlCategory.LoseEffect => (LogMessageType.StatusRemove, $"{format.FormatNetworkBuffMessage((ushort)arg0, status.GetRow(arg0).Name.RawString, 0.00f, arg2, DalamudApi.ObjectTable.SearchById(arg2)?.Name.TextValue ?? "", entityId, entity.Name.TextValue, (ushort)arg1, entity.CurrentHp, entity.MaxHp)}"),
@@ -307,18 +317,18 @@ namespace DDD
                 //ActorControlCategory.HoT_DoT => $"TESTING::{id}:{entityId:X}:0={arg0:X}:1={arg1:X}:2={arg2}:3={arg3:X}:4={arg4}:5={arg5}:6={targetId:X}",
                 _ => (LogMessageType.Debug, "")
             };
+            if (id == ActorControlCategory.HoT_DoT && arg1 != 3) type = LogMessageType.Debug;
             var time = DateTime.Now;
             if (type != LogMessageType.Debug) eventHandle.SetLog(type, $"{message}",time);
             if (id == ActorControlCategory.LoseEffect) manager.RemoveStatus(entityId,new NetStatus(){Param = (byte)(arg1>>8),RemainingTime = 0f,SourceID = arg2,StackCount =(byte)(arg1&0xF),StatusID = (ushort)arg0}, time);
             if (id == ActorControlCategory.UpdateEffect) manager.RefreshStatus(entityId, new NetStatus() { Param = (byte)(arg1 >> 8), RemainingTime = 0f, SourceID = arg2, StackCount = (byte)(arg1 & 0xF), StatusID = (ushort)arg0 }, time);
             if (type == LogMessageType.DoTHoT) manager.OutputStatusList(entityId,time);
-            if (type == LogMessageType.DoTHoT && arg0 == 839) PluginLog.Error($"舞步::{id}:{entityId:X}:0={arg0:X}:1={arg1:X}:2={arg2}:3={arg3:X}:4={arg4}:5={arg5}:6={targetId:X}");
         }
 
         private unsafe void ReceiveAbilityEffect(uint sourceId, IntPtr sourceChara, IntPtr pos,
                                                    IntPtr effectHeader, IntPtr effectArray, IntPtr effectTrail)
         {
-
+            PluginLog.Debug($"Ability");
             var targetCount = *(byte*)(effectHeader + 0x21);
             var data = Marshal.PtrToStructure<Ability1>(effectHeader);
             var effects = Marshal.PtrToStructure<EffectsEntry>(effectArray);
@@ -379,6 +389,7 @@ namespace DDD
 
         private unsafe void ClientState_TerritoryChanged(object? sender, ushort e)
         {
+            PluginLog.Debug($"Terryitory");
             CheckPlayer();
             var placeName = territory.GetRow(DalamudApi.ClientState.TerritoryType)?.PlaceName.Value?.Name.RawString;
             if (!string.IsNullOrEmpty(territory.GetRow(DalamudApi.ClientState.TerritoryType)?.ContentFinderCondition.Value?.Name.RawString))
@@ -391,6 +402,8 @@ namespace DDD
 
         private unsafe void MapChange()
         {
+            PluginLog.Debug($"Map");
+            if (MapIdDungeon == IntPtr.Zero || MapIdDungeon == IntPtr.Zero) return;
             var MapId = *(uint*)MapIdDungeon == 0 ? *(uint*)MapIdWorld : *(uint*)MapIdDungeon;
             if (oldMap == MapId) return;
             oldMap = MapId;
@@ -401,6 +414,7 @@ namespace DDD
 
         private void CheckPlayer()
         {
+            PluginLog.Debug($"CheckPlayer");
             if (DalamudApi.ClientState.LocalPlayer is null || plID == DalamudApi.ClientState.LocalPlayer.ObjectId) return;
             plID = DalamudApi.ClientState.LocalPlayer.ObjectId;
             eventHandle.SetLog(LogMessageType.ChangePrimaryPlayer, $"{format.FormatChangePrimaryPlayerMessage(plID, DalamudApi.ClientState.LocalPlayer.Name.TextValue)}",DateTime.Now);
@@ -441,6 +455,7 @@ namespace DDD
 
         private void EffectResult(uint targetId, IntPtr ptr, byte a3)
         {
+            PluginLog.Debug($"EffectR");
             var data = Marshal.PtrToStructure<FFXIVIpcEffectResult>(ptr);
             
             EffectResultHook.Original(targetId, ptr, a3);
@@ -474,6 +489,7 @@ namespace DDD
 
         private void EffectResultBasic(uint targetId, IntPtr ptr, byte a3)
         {
+            PluginLog.Debug($"EffectResultBasic");
             var data = Marshal.PtrToStructure<FFXIVIpcEffectResult>(ptr);
             //PluginLog.Warning($"Basic:{data.Effects[0].EffectID}");
             EffectResultBasicHook.Original(targetId, ptr, a3);
@@ -496,6 +512,7 @@ namespace DDD
 
         private void BuffList1Do(uint targetId, IntPtr b, byte c)
         {
+            PluginLog.Debug($"BuffList");
             var effectList = Marshal.PtrToStructure<StatusEffectList>(b);
             BuffList1Hook.Original(targetId, b, c);
             var array = new uint[93];
@@ -548,7 +565,7 @@ namespace DDD
             WindowSystem.RemoveAllWindows();
             CommandManager.RemoveHandler(CommandName);
             DalamudApi.ClientState.TerritoryChanged -= ClientState_TerritoryChanged;
-            DalamudApi.Framework.Update -= PartyChanged;
+            //DalamudApi.Framework.Update -= PartyChanged;
             ActorControlSelfHook.Dispose();
             ReceiveAbilityHook.Dispose();
             CastHook.Dispose();
@@ -560,10 +577,12 @@ namespace DDD
             BuffList1Hook.Dispose();
             EnvControlHook.Dispose();
             UpdateHPMPHook.Dispose();
+            UpdatePartyHook.Dispose();
             eventHandle.CloseFile();
             //new IPC().Unsub();
 
             DalamudApi.GameNetwork.NetworkMessage -= GameNetworkOnNetworkMessage;
+            DalamudApi.Framework.Update -= FrameworkOnUpdate;
         }
 
         private void OnCommand(string command, string args)

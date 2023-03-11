@@ -44,6 +44,7 @@ namespace DDD
         {
             //DO something;
             PluginLog.Warning($"UNSUB!!!|{obj}");
+            Unsub();
 
         }
 
