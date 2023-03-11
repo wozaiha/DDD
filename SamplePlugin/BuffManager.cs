@@ -136,7 +136,7 @@ public class BuffManager
             if (!oldList.Contains(newbuff)) continue;
             var index = oldList.FindIndex(x => x.Equals(newbuff));
             var oldbuff = oldList[index];
-            if (oldbuff.Param != newbuff.Param || oldbuff.StackCount != newbuff.StackCount || oldbuff.RemainingTime <= newbuff.RemainingTime) list.Add(newbuff);
+            if (oldbuff.Param != newbuff.Param || oldbuff.StackCount != newbuff.StackCount || oldbuff.RemainingTime < newbuff.RemainingTime) list.Add(newbuff);
         }
         
         return list;
