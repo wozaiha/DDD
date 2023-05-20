@@ -29,7 +29,7 @@
   </ItemGroup>
 
   <PropertyGroup>
-      <DalamudLibPath>C:\Users\Administrator\AppData\Roaming\XIVLauncher\addon\Hooks\dev\</DalamudLibPath>
+      <DalamudLibPath>$(APPDATA)\XIVLauncher\addon\Hooks\dev\</DalamudLibPath>
   </PropertyGroup>
   
    <PropertyGroup Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))'">

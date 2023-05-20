@@ -18,6 +18,7 @@ using Action = Lumina.Excel.GeneratedSheets.Action;
 using DDD.Struct;
 using DDD.Plugins;
 using Dalamud.Game;
+using Dalamud.Logging;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace DDD
@@ -111,8 +112,8 @@ namespace DDD
             DalamudApi.Initialize(this, PluginInterface);
 
             eventHandle = new Event();
-            ipc = new IPC();
-            ipc.InitIpc(this);
+            //ipc = new IPC();
+            //ipc.InitIpc(this);
             manager = new BuffManager(format, eventHandle);
             //DalamudApi.Framework.Update += PartyChanged;
             contentsReplayModule = (ContentsReplayModule*)DalamudApi.SigScanner.GetStaticAddressFromSig("48 8D 0D ?? ?? ?? ?? 88 44 24 24");
