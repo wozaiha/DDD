@@ -96,7 +96,7 @@ public class BuffManager
         buff.RemainingTime = buff.RemainingTime == 0f ? 9999.00f : buff.RemainingTime;
         var log =
             $"{Format.FormatNetworkBuffMessage(buff.StatusID, status.GetRow(buff.StatusID)?.Name.RawString, buff.RemainingTime, buff.SourceID, source?.Name.TextValue, id, target?.Name.TextValue, (ushort)((buff.Param << 8) + buff.StackCount), targetMaxHp, maxhp)}";
-        EventHandle.SetLog(LogMessageType.StatusAdd, log, time);
+        //EventHandle.SetLog(LogMessageType.StatusAdd, log, time);
         buffs.Add(buff);
         manager[id] = buffs;
     }
