@@ -32,9 +32,9 @@ namespace DDD
         }
         
 
-        public void SetLog(LogMessageType type, string text, DateTime time)
+        public unsafe void SetLog(LogMessageType type, string text, DateTime time)
         {
-            if (DalamudApi.Condition[ConditionFlag.DutyRecorderPlayback])
+            if (DalamudApi.Condition[ConditionFlag.DutyRecorderPlayback]&&Plugin.contentsReplayModule->speed<20)
             {
                 LogSender.Send(new() { Type = (int)type, Message = text });
             }
@@ -51,15 +51,10 @@ namespace DDD
             text = string.Concat(array);
             text = text + "|" + LogOutput.u_65535(text + "|" + Interlocked.Increment(ref logIndex).ToString(CultureInfo.InvariantCulture));
 
-            if (Output)
-            {
-                if (!File.Exists(logFileName)) NewFile();
-                sw?.WriteLine(text);
-                sw?.Flush();
-            }
-            
-            //send(type,text);
-            NewLog(type, text);
+            //if (!File.Exists(logFileName)) NewFile();
+            //sw?.WriteLine(text);
+            //sw?.Flush();
+            //NewLog(type, text);
         }
         protected  async void send(LogMessageType type, string log)
         {
