@@ -10,6 +10,7 @@ namespace DDD
         public int Version { get; set; } = 0;
 
         public bool Output = false;
+        public bool DebugInfo = false;
 
         // the below exist just to make saving less cumbersome
         [NonSerialized]

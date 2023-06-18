@@ -30,7 +30,6 @@ namespace DDD
 
         private DalamudPluginInterface PluginInterface { get; init; }
         private CommandManager CommandManager { get; init; }
-        public Configuration Configuration { get; init; }
         public WindowSystem WindowSystem = new("ddd");
         private Dictionary<string, uint> opCodes;
         private readonly LogFormat format = new();
@@ -106,9 +105,6 @@ namespace DDD
             PluginInterface = pluginInterface;
             CommandManager = commandManager;
 
-            Configuration = PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
-            Configuration.Initialize(PluginInterface);
-
             DalamudApi.Initialize(this, PluginInterface);
 
             eventHandle = new Event();
@@ -134,8 +130,7 @@ namespace DDD
             WayMarkHook = Hook<WayMarkDelegate>.FromAddress(
                 DalamudApi.SigScanner.ScanText("48 8B D1 48 8D 0D ?? ?? ?? ?? E9 ?? ?? ?? ?? CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC 40 55 56"), WayMark);
             WayMarkHook.Enable();
-            JudgeLanguage.NewJudgeLanguage();
-            if (JudgeLanguage.isInChina)
+            if (Loclization.isCN)
             {
                 WayMarkPresentHook = Hook<WayMarkPresentDelegate>.FromAddress(
     DalamudApi.SigScanner.ScanText("E8 ?? ?? ?? ?? B0 01 48 8B 5C 24 ?? 48 8B 74 24 ?? 48 83 C4 50 5F C3 48 8B D3 "), WayMarkPresent);
@@ -591,12 +586,13 @@ DalamudApi.SigScanner.ScanText("E9 ?? ?? ?? ?? 4C 8D 43 10 8B D6 48 8D 0D ?? ?? 
             //new IPC().Unsub();
 
             DalamudApi.Framework.Update -= FrameworkOnUpdate;
+            DalamudApi.Dispose();
         }
 
         private void OnCommand(string command, string args)
         {
             // in response to the slash command, just display our main ui
-            WindowSystem.GetWindow("A Wonderful Configuration Window").IsOpen = true;
+            WindowSystem.GetWindow("DDD Config").IsOpen = true;
         }
 
         private void DrawUI()
@@ -606,7 +602,7 @@ DalamudApi.SigScanner.ScanText("E9 ?? ?? ?? ?? 4C 8D 43 10 8B D6 48 8D 0D ?? ?? 
 
         public void DrawConfigUI()
         {
-            WindowSystem.GetWindow("A Wonderful Configuration Window").IsOpen = true;
+            WindowSystem.GetWindow("DDD Config").IsOpen = true;
         }
 
     }

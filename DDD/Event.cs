@@ -54,7 +54,7 @@ namespace DDD
             //if (!File.Exists(logFileName)) NewFile();
             //sw?.WriteLine(text);
             //sw?.Flush();
-            //NewLog(type, text);
+            if(DalamudApi.Configuration.DebugInfo) NewLog(type, text);
         }
         protected  async void send(LogMessageType type, string log)
         {

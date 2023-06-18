@@ -153,9 +153,13 @@ namespace DDD
             throw new InvalidOperationException();
         }
 
+        public static Configuration Configuration { get; set; }
         public static void Initialize(IDalamudPlugin plugin, DalamudPluginInterface pluginInterface)
         {
             _ = new DalamudApi(plugin, pluginInterface);
+            Configuration = pluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
+            Configuration.Initialize(pluginInterface);
+
         }
 
         public static void Dispose()

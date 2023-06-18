@@ -3,7 +3,7 @@
   "Name": "DDD",
   "Punchline": "类ACT网络LOG输出支持插件",
   "Description": "只负责输出类ACT的网络包,处理请自己看着办.",
-  "InternalName": "DDDPlugin",
+  "InternalName": "DDD",
   "ApplicableVersion": "any",
   "Tags": [
     "ACT",
